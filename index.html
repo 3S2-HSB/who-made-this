@@ -87,10 +87,9 @@
                 </div>
                 <div>
                     <h1 class="font-extrabold text-xl tracking-tight text-slate-900 flex items-center gap-2">
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-slack-purple to-slack-pink">Who Made This</span>
-                        <span class="text-xs font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">v5.0 마스코트 수혈</span>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-slack-purple to-slack-pink">Who Make This</span>
                     </h1>
-                    <p class="text-xs text-slate-500 font-medium">행성 마스코트 "행성이 텍스트" 탑재 합성 이모지 빌더</p>
+                    <p class="text-xs text-slate-500 font-medium">슬랙 최적화 12.5 FPS 비디오 및 고해상도 텍스트 이모지 빌더</p>
                 </div>
             </div>
             
@@ -147,11 +146,8 @@
                 <!-- 탭 메뉴 영역 -->
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                     <div class="flex flex-wrap border-b border-slate-100 bg-slate-50/50 p-2 gap-1.5">
-                        <button onclick="switchTab('text-tab')" id="tab-btn-text" class="flex-1 min-w-[120px] py-3 px-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-all text-slate-500 hover:text-slate-800 hover:bg-white/50">
+                        <button onclick="switchTab('text-tab')" id="tab-btn-text" class="flex-1 min-w-[120px] py-3 px-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all bg-white text-slack-purple shadow-sm border border-slate-200/50">
                             <i class="fa-solid fa-font text-xs"></i> 텍스트 이모지
-                        </button>
-                        <button onclick="switchTab('planet-text-tab')" id="tab-btn-planet-text" class="flex-1 min-w-[150px] py-3 px-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all bg-white text-slack-purple shadow-sm border border-slate-200/50">
-                            <i class="fa-solid fa-earth-americas text-xs text-indigo-500"></i> 행성이 텍스트 🪐
                         </button>
                         <button onclick="switchTab('image-tab')" id="tab-btn-image" class="flex-1 min-w-[120px] py-3 px-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-all text-slate-500 hover:text-slate-800 hover:bg-white/50">
                             <i class="fa-solid fa-image text-xs"></i> 이미지 변환
@@ -166,118 +162,94 @@
                     </div>
 
                     <div class="p-6">
-                        <!-- 0. [NEW] 행성이 텍스트 설정 패널 -->
-                        <div id="panel-planet-text" class="space-y-5">
-                            <div class="p-4 bg-purple-50 rounded-xl border border-purple-200/60 flex items-start gap-3">
-                                <i class="fa-solid fa-earth-asia text-purple-600 text-lg mt-0.5"></i>
-                                <div class="space-y-1">
-                                    <p class="text-xs font-bold text-purple-900">우리의 귀여운 마스코트 "행성"이 특별관</p>
-                                    <p class="text-[11px] text-purple-700 leading-relaxed">
-                                        아래 5개의 행성이 슬롯 중 소장하고 계신 <strong>손그림 행성 원본 투명 PNG</strong>를 등록한 후 텍스트를 입력해 보세요. 행성이가 들고 있거나 띄워 놓은 형태로 슬랙 이모지가 마법처럼 합성됩니다!
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- 행성이 마스코트 등록 상황판 -->
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 mb-2.5 uppercase tracking-wide">1단계: 행성이 원본 등록 현황 (클릭해서 등록)</label>
-                                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2" id="mascot-selector-grid">
-                                    <!-- 슬롯 1 -->
-                                    <button onclick="triggerMascotUpload('coffee')" id="mascot-slot-coffee" class="p-2 border-2 border-dashed border-slate-200 hover:border-purple-400 bg-slate-50/50 rounded-xl text-center transition-all group relative">
-                                        <div class="text-base mb-1">☕</div>
-                                        <span class="block text-[10px] font-bold text-slate-600 truncate">커피 수혈</span>
-                                        <span id="slot-status-coffee" class="absolute top-1 right-1 text-[8px] bg-slate-200 text-slate-500 px-1 rounded-full">미등록</span>
-                                    </button>
-                                    <!-- 슬롯 2 -->
-                                    <button onclick="triggerMascotUpload('fairy')" id="mascot-slot-fairy" class="p-2 border-2 border-dashed border-slate-200 hover:border-purple-400 bg-slate-50/50 rounded-xl text-center transition-all group relative">
-                                        <div class="text-base mb-1">🧚‍♀️</div>
-                                        <span class="block text-[10px] font-bold text-slate-600 truncate">별요정</span>
-                                        <span id="slot-status-fairy" class="absolute top-1 right-1 text-[8px] bg-slate-200 text-slate-500 px-1 rounded-full">미등록</span>
-                                    </button>
-                                    <!-- 슬롯 3 -->
-                                    <button onclick="triggerMascotUpload('coding')" id="mascot-slot-coding" class="p-2 border-2 border-dashed border-slate-200 hover:border-purple-400 bg-slate-50/50 rounded-xl text-center transition-all group relative">
-                                        <div class="text-base mb-1">💻</div>
-                                        <span class="block text-[10px] font-bold text-slate-600 truncate">코딩 행성</span>
-                                        <span id="slot-status-coding" class="absolute top-1 right-1 text-[8px] bg-slate-200 text-slate-500 px-1 rounded-full">미등록</span>
-                                    </button>
-                                    <!-- 슬롯 4 -->
-                                    <button onclick="triggerMascotUpload('leg')" id="mascot-slot-leg" class="p-2 border-2 border-dashed border-slate-200 hover:border-purple-400 bg-slate-50/50 rounded-xl text-center transition-all group relative">
-                                        <div class="text-base mb-1">🦵</div>
-                                        <span class="block text-[10px] font-bold text-slate-600 truncate">한발 들기</span>
-                                        <span id="slot-status-leg" class="absolute top-1 right-1 text-[8px] bg-slate-200 text-slate-500 px-1 rounded-full">미등록</span>
-                                    </button>
-                                    <!-- 슬롯 5 -->
-                                    <button onclick="triggerMascotUpload('ring')" id="mascot-slot-ring" class="p-2 border-2 border-dashed border-purple-300 hover:border-purple-500 bg-purple-50/20 rounded-xl text-center transition-all group relative ring-2 ring-purple-400/20">
-                                        <div class="text-base mb-1">🪐</div>
-                                        <span class="block text-[10px] font-bold text-purple-700 truncate">띠 들고있기</span>
-                                        <span id="slot-status-ring" class="absolute top-1 right-1 text-[8px] bg-purple-500 text-white px-1 rounded-full">Active</span>
-                                    </button>
-                                </div>
-                                <input type="file" id="mascot-file-hidden-input" accept="image/png" class="hidden" onchange="handleMascotUpload(event)">
-                            </div>
-
-                            <!-- 텍스트 입력부 -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">2단계: 행성이가 들고 있을 글자</label>
-                                    <input type="text" id="planet-text-input" value="COFFEE" maxlength="12" oninput="updateSourceData()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-black text-sm focus:outline-none focus:border-indigo-500 focus:bg-white text-slate-800">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">폰트 컬렉션</label>
-                                    <select id="planet-font-family" onchange="updateSourceData()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold focus:outline-none focus:border-indigo-500">
-                                        <option value="Arial Black, Impact, sans-serif">💥 Ultra Thick (Impact)</option>
-                                        <option value="Inter, system-ui, sans-serif">⚡ Modern (Inter)</option>
-                                        <option value="'Courier New', monospace">👾 Code Style (Monospace)</option>
-                                        <option value="'Noto Sans KR', sans-serif">🎈 Cute Round (Noto KR)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- 세밀 조정용 조절바 피팅 -->
-                            <div class="p-4 bg-slate-100/50 rounded-xl border border-slate-200 space-y-4">
-                                <span class="block text-xs font-bold text-slate-700 uppercase tracking-wide">3단계: 업로드 파일 맞춤형 미세 위치 피팅</span>
-                                
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <div class="flex justify-between text-[11px] font-semibold text-slate-500 mb-1">
-                                            <span>수평 위치 (Offset X)</span>
-                                            <span id="planet-x-val">0</span>
-                                        </div>
-                                        <input type="range" id="planet-offset-x" min="-60" max="60" value="0" oninput="adjustPlanetText('x', this.value)" class="w-full accent-indigo-500 cursor-pointer">
-                                    </div>
-                                    <div>
-                                        <div class="flex justify-between text-[11px] font-semibold text-slate-500 mb-1">
-                                            <span>수직 위치 (Offset Y)</span>
-                                            <span id="planet-y-val">-28</span>
-                                        </div>
-                                        <input type="range" id="planet-offset-y" min="-60" max="60" value="-28" oninput="adjustPlanetText('y', this.value)" class="w-full accent-indigo-500 cursor-pointer">
-                                    </div>
-                                    <div>
-                                        <div class="flex justify-between text-[11px] font-semibold text-slate-500 mb-1">
-                                            <span>글자 크기 배율</span>
-                                            <span id="planet-scale-val">100%</span>
-                                        </div>
-                                        <input type="range" id="planet-scale" min="40" max="180" value="100" oninput="adjustPlanetText('scale', this.value)" class="w-full accent-indigo-500 cursor-pointer">
-                                    </div>
-                                    <div>
-                                        <div class="flex justify-between text-[11px] font-semibold text-slate-500 mb-1">
-                                            <span>회전 각도 (Rotation)</span>
-                                            <span id="planet-rotate-val">0°</span>
-                                        </div>
-                                        <input type="range" id="planet-rotate" min="-180" max="180" value="0" oninput="adjustPlanetText('rotate', this.value)" class="w-full accent-indigo-500 cursor-pointer">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- 1. 텍스트 이모지 설정 패널 -->
-                        <div id="panel-text" class="hidden space-y-5">
+                        <div id="panel-text" class="space-y-5">
                             <div>
-                                <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">이모지 텍스트 입력</label>
-                                <div class="relative">
-                                    <input type="text" id="text-input" value="WOW!" maxlength="10" placeholder="텍스트를 입력하세요 (최대 10자)" oninput="updateSourceData()" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3.5 font-black text-lg focus:outline-none focus:border-slack-purple focus:bg-white transition-all text-slate-800 tracking-wide">
-                                    <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400" id="text-length-count">4 / 10자</span>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">이모지 텍스트 입력 (줄바꿈 가능)</label>
+                                    
+                                    <!-- 이모지 팔레트 토글 버튼 -->
+                                    <button onclick="toggleEmojiPalette()" class="text-xs font-bold text-slack-purple hover:text-slack-pink flex items-center gap-1 bg-purple-50 hover:bg-purple-100/80 px-2.5 py-1 rounded-lg border border-purple-200 transition-all">
+                                        <i class="fa-regular fa-face-smile text-sm"></i> 이모지 선택기
+                                    </button>
                                 </div>
+                                
+                                <div class="relative">
+                                    <textarea id="text-input" placeholder="텍스트를 입력하세요&#10;(Enter로 줄바꿈 가능)" oninput="updateSourceData()" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 font-black text-base focus:outline-none focus:border-slack-purple focus:bg-white transition-all text-slate-800 tracking-wide resize-none h-20">WOW! 🎉</textarea>
+                                </div>
+
+                                <!-- 퀵 이모지 삽입 트레이 및 전체 팝오버 패널 -->
+                                <div class="mt-2.5 space-y-2">
+                                    <div class="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                                        <span class="font-bold text-[10px] uppercase text-slate-400 mr-1 select-none">퀵 삽입:</span>
+                                        <button onclick="insertEmojiAtCursor('😂')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="웃기">😂</button>
+                                        <button onclick="insertEmojiAtCursor('👍')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="따봉">👍</button>
+                                        <button onclick="insertEmojiAtCursor('🎉')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="축하">🎉</button>
+                                        <button onclick="insertEmojiAtCursor('🔥')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="열정">🔥</button>
+                                        <button onclick="insertEmojiAtCursor('✨')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="반짝">✨</button>
+                                        <button onclick="insertEmojiAtCursor('🚀')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="로켓">🚀</button>
+                                        <button onclick="insertEmojiAtCursor('💻')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="코딩">💻</button>
+                                        <button onclick="insertEmojiAtCursor('🪐')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="행성">🪐</button>
+                                        <button onclick="insertEmojiAtCursor('💥')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="폭발">💥</button>
+                                        <button onclick="insertEmojiAtCursor('🚨')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="싸이렌">🚨</button>
+                                        <button onclick="insertEmojiAtCursor('💡')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="전구">💡</button>
+                                        <button onclick="insertEmojiAtCursor('❤️')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="하트">❤️</button>
+                                        <button onclick="insertEmojiAtCursor('💯')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="백점">💯</button>
+                                    </div>
+
+                                    <!-- 토글식 대형 이모지 선택창 -->
+                                    <div id="emoji-palette-popover" class="hidden bg-white border border-slate-200 rounded-xl p-3 shadow-md max-h-[160px] overflow-y-auto space-y-3 transition-all">
+                                        <div>
+                                            <span class="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 select-none">표정 / 인물</span>
+                                            <div class="flex flex-wrap gap-2 text-base">
+                                                <button onclick="insertEmojiAtCursor('😀')" class="hover:scale-125 transition-all">😀</button>
+                                                <button onclick="insertEmojiAtCursor('🤣')" class="hover:scale-125 transition-all">🤣</button>
+                                                <button onclick="insertEmojiAtCursor('😍')" class="hover:scale-125 transition-all">😍</button>
+                                                <button onclick="insertEmojiAtCursor('🤩')" class="hover:scale-125 transition-all">🤩</button>
+                                                <button onclick="insertEmojiAtCursor('🤔')" class="hover:scale-125 transition-all">🤔</button>
+                                                <button onclick="insertEmojiAtCursor('😎')" class="hover:scale-125 transition-all">😎</button>
+                                                <button onclick="insertEmojiAtCursor('🤤')" class="hover:scale-125 transition-all">🤤</button>
+                                                <button onclick="insertEmojiAtCursor('🙏')" class="hover:scale-125 transition-all">🙏</button>
+                                                <button onclick="insertEmojiAtCursor('🙌')" class="hover:scale-125 transition-all">🙌</button>
+                                                <button onclick="insertEmojiAtCursor('👏')" class="hover:scale-125 transition-all">👏</button>
+                                                <button onclick="insertEmojiAtCursor('💪')" class="hover:scale-125 transition-all">💪</button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 select-none">사물 / 환경 / 심볼</span>
+                                            <div class="flex flex-wrap gap-2 text-base">
+                                                <button onclick="insertEmojiAtCursor('🍻')" class="hover:scale-125 transition-all">🍻</button>
+                                                <button onclick="insertEmojiAtCursor('☕')" class="hover:scale-125 transition-all">☕</button>
+                                                <button onclick="insertEmojiAtCursor('🍔')" class="hover:scale-125 transition-all">🍔</button>
+                                                <button onclick="insertEmojiAtCursor('🍕')" class="hover:scale-125 transition-all">🍕</button>
+                                                <button onclick="insertEmojiAtCursor('🌈')" class="hover:scale-125 transition-all">🌈</button>
+                                                <button onclick="insertEmojiAtCursor('☀️')" class="hover:scale-125 transition-all">☀️</button>
+                                                <button onclick="insertEmojiAtCursor('🍀')" class="hover:scale-125 transition-all">🍀</button>
+                                                <button onclick="insertEmojiAtCursor('💵')" class="hover:scale-125 transition-all">💵</button>
+                                                <button onclick="insertEmojiAtCursor('🎯')" class="hover:scale-125 transition-all">🎯</button>
+                                                <button onclick="insertEmojiAtCursor('🎉')" class="hover:scale-125 transition-all">🎉</button>
+                                                <button onclick="insertEmojiAtCursor('🎈')" class="hover:scale-125 transition-all">🎈</button>
+                                                <button onclick="insertEmojiAtCursor('✅')" class="hover:scale-125 transition-all">✅</button>
+                                                <button onclick="insertEmojiAtCursor('🔥')" class="hover:scale-125 transition-all">🔥</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 순차 표시 토글 (메인 텍스트 버전) -->
+                            <div class="p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 flex items-center justify-between">
+                                <div class="flex gap-2.5 items-center">
+                                    <span class="text-base">⏱️</span>
+                                    <div class="space-y-0.5">
+                                        <p class="text-xs font-bold text-indigo-950">한 글자씩 순차 재생</p>
+                                        <p class="text-[10px] text-indigo-500">입력된 글자가 0.3초마다 한 글자씩 차례대로 전환됩니다.</p>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="text-seq-toggle-main" onchange="toggleSeqText(this.checked)" class="sr-only peer">
+                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
@@ -294,7 +266,7 @@
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">글자 크기 (px)</label>
                                     <div class="flex items-center gap-3">
-                                        <input type="range" id="font-size-slider" min="30" max="110" value="70" oninput="updateFontSize(this.value)" class="flex-1 accent-slack-purple cursor-pointer">
+                                        <input type="range" id="font-size-slider" min="10" max="110" value="70" oninput="updateFontSize(this.value)" class="flex-1 accent-slack-purple cursor-pointer">
                                         <span class="text-xs font-bold text-slate-700 w-8 text-right" id="font-size-val">70</span>
                                     </div>
                                 </div>
@@ -413,7 +385,7 @@
                         </div>
                     </div>
 
-                    <!-- 커스텀 토글 그리드 -->
+                    <!-- 커스텀 토글 그리드 (6개 그리드로 세련되게 정렬) -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         
                         <!-- Toggle 1: Wiggle / Movement -->
@@ -433,7 +405,7 @@
                             </label>
                         </div>
 
-                        <!-- Toggle 2: Sparkle -->
+                        <!-- Toggle 2: Sparkle (스위치 깨짐 현상 완벽 복구) -->
                         <div class="p-4 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/30 transition-all flex items-center justify-between">
                             <div class="flex gap-3">
                                 <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500">
@@ -485,19 +457,36 @@
                         </div>
 
                         <!-- Toggle 5: Random (Party Mode) -->
-                        <div class="p-4 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/30 transition-all flex items-center justify-between md:col-span-2">
+                        <div class="p-4 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/30 transition-all flex items-center justify-between">
                             <div class="flex gap-3">
                                 <div class="w-10 h-10 bg-pink-50 rounded-xl flex items-center justify-center text-pink-600">
                                     <i class="fa-solid fa-child-reaching text-lg animate-bounce"></i>
                                 </div>
                                 <div class="space-y-0.5">
-                                    <p class="text-xs font-bold text-slate-800">랜덤 파티 효과 (Ultra Party Hue)</p>
-                                    <p class="text-[10px] text-slate-400">슬랙 감성 1000% 무지개색 사이키 조명 회전 난사 효과</p>
+                                    <p class="text-xs font-bold text-slate-800">랜덤 파티 효과 (Party Hue)</p>
+                                    <p class="text-[10px] text-slate-400">무지개색 사이키 조명 회전 효과</p>
                                 </div>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="effect-party" onchange="updateEffects()" class="sr-only peer">
                                 <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+                            </label>
+                        </div>
+
+                        <!-- Toggle 6: Fire (Hellfire) -->
+                        <div class="p-4 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/30 transition-all flex items-center justify-between">
+                            <div class="flex gap-3">
+                                <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600">
+                                    <i class="fa-solid fa-fire text-lg animate-pulse"></i>
+                                </div>
+                                <div class="space-y-0.5">
+                                    <p class="text-xs font-bold text-slate-800">지옥불 효과 (Hellfire)</p>
+                                    <p class="text-[10px] text-slate-400">검정 배경에 활활 타오르는 불꽃 루프</p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="effect-fire" onchange="updateEffects(); handleFireEffectToggle(this.checked)" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
                             </label>
                         </div>
                     </div>
@@ -540,8 +529,8 @@
 
             <!-- 미리보기 모니터 영역 (우측) -->
             <section class="lg:col-span-5 flex flex-col gap-6">
-                <!-- 프리뷰 카드 -->
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
+                <!-- 프리뷰 카드 (h-full 제거로 잘림 해결) -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                     <div class="bg-slate-50/50 border-b border-slate-100 p-4 flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <span class="w-3 h-3 rounded-full bg-red-400"></span>
@@ -603,7 +592,7 @@
                                 <span class="text-xs font-extrabold text-slack-purple" id="capture-duration-text">자동 추출 대기 중</span>
                             </div>
                             <p class="text-[11px] text-slate-500 leading-relaxed">
-                                비디오를 업로드할 경우 영상 전체 길이(최대 4초 이내)를 완전히 분석하여 0초부터 한 프레임씩 끊김 없이 이어서 매끄러운 움짤로 제작해 드립니다.
+                                비디오를 업로드하거나 순차 텍스트 모드를 켤 경우 최적의 루프 길이를 자동으로 계산해 끊김 없는 부드러운 움짤로 제작해 드립니다.
                             </p>
                             
                             <div class="flex items-center justify-between pt-2 border-t border-slate-200/50">
@@ -661,7 +650,7 @@
                     </div>
                 </div>
 
-                <!-- 슬랙 메시지 시뮬레이터 -->
+                <!-- 슬랙 메시지 시뮬레이터 (잘림 방지 패널 구조 최적화) -->
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                     <div class="border-b border-slate-100 p-4 bg-slate-50/50 flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-800 flex items-center gap-2">
@@ -675,7 +664,7 @@
                     </div>
 
                     <!-- 대화방 내용 시뮬레이션 -->
-                    <div id="slack-mockup-area" class="p-5 bg-white space-y-4 min-h-[140px] transition-all">
+                    <div id="slack-mockup-area" class="p-6 bg-white space-y-5 min-h-[190px] transition-all overflow-y-auto">
                         
                         <!-- Row 1 -->
                         <div class="flex gap-3">
@@ -695,7 +684,7 @@
                         </div>
 
                         <!-- Row 2 -->
-                        <div class="flex gap-3">
+                        <div class="flex gap-3 pb-2">
                             <div class="w-9 h-9 bg-indigo-500 rounded flex-shrink-0 flex items-center justify-center text-white text-xs font-black uppercase">
                                 ME
                             </div>
@@ -732,32 +721,18 @@
 
         // 앱 데이터 코어 매니저
         const STATE = {
-            currentTab: 'planet-text', // text, planet-text, image, video
-            text: 'WOW!',
+            currentTab: 'text', // text, image, video
+            text: 'WOW! 🎉',
             textColor: '#FFFFFF',
             textStrokeColor: '#000000',
             strokeWidth: 5,
             fontSize: 70,
             fontFamily: 'Arial Black, Impact, sans-serif',
             
-            // [NEW] 행성이 텍스트 특화 보관소
-            planetText: 'COFFEE',
-            planetFontFamily: 'Arial Black, Impact, sans-serif',
-            planetActivePose: 'ring', // coffee, fairy, coding, leg, ring
-            planetMascots: {
-                coffee: null,
-                fairy: null,
-                coding: null,
-                leg: null,
-                ring: null
-            },
-            planetOffsets: {
-                coffee: { x: -35, y: -2, scale: 50, rotate: 0 },
-                fairy: { x: 38, y: -38, scale: 65, rotate: -20 },
-                coding: { x: -16, y: 15, scale: 50, rotate: 10 },
-                leg: { x: 0, y: -45, scale: 80, rotate: 0 },
-                ring: { x: 0, y: -28, scale: 100, rotate: 0 }
-            },
+            // 한 글자씩 순차 노출 전용 속성
+            seqTextEnabled: false,
+            seqDelaySec: 0.3, // 0.3초당 한 글자 고정
+            elapsedTimeSec: 0, // 경과 시간(초) 마스터 클럭
 
             // 이미지 엘리먼트 및 정렬
             imageElement: null,
@@ -780,7 +755,8 @@
                 sparkle: false,
                 glitch: false,
                 wave: false,
-                party: false
+                party: false,
+                fire: false
             },
 
             // 시뮬레이터 줌 스케일링
@@ -812,9 +788,7 @@
             initEventHandlers();
             startRenderLoop();
             updateCaptureDurationInfo();
-            // 기본 오프셋 상태 바인딩 호출
-            bindPlanetOffsetControls();
-            showToast('🎨 행성이 텍스트 슬롯이 준비되었습니다! 원본 PNG를 올려보세요.', 'info');
+            showToast('🎨 슬랙 최적화 인코더가 작동 준비되었습니다!', 'info');
         };
 
         function initEventHandlers() {
@@ -850,98 +824,6 @@
             document.getElementById('video-file-input')?.addEventListener('change', function(e) {
                 if (e.target.files.length > 0) handleVideoFile(e.target.files[0]);
             });
-        }
-
-        // [NEW] 행성이 마스코트 개별 숨겨진 업로드 트리거링
-        function triggerMascotUpload(poseType) {
-            STATE.planetActivePose = poseType;
-            // UI 그리드 액티브 클래스 갱신
-            const poses = ['coffee', 'fairy', 'coding', 'leg', 'ring'];
-            poses.forEach(p => {
-                const btn = document.getElementById(`mascot-slot-${p}`);
-                if (btn) {
-                    if (p === poseType) {
-                        btn.className = "p-2 border-2 border-solid border-purple-500 bg-purple-50/40 rounded-xl text-center transition-all group relative ring-2 ring-purple-400/20";
-                    } else {
-                        btn.className = "p-2 border-2 border-dashed border-slate-200 hover:border-purple-300 bg-slate-50/50 rounded-xl text-center transition-all group relative";
-                    }
-                }
-            });
-
-            // 선택된 포즈의 오프셋 슬라이더 값을 세팅해줌
-            bindPlanetOffsetControls();
-
-            // 파일 입력을 간접 클릭하여 마스코트 전용 바인딩 수행
-            const fileInput = document.getElementById('mascot-file-hidden-input');
-            if (fileInput) {
-                fileInput.click();
-            }
-        }
-
-        // [NEW] 행성이 등록 핸들러
-        function handleMascotUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            if (!file.type.startsWith('image/')) {
-                showToast('❌ 올바른 이미지 파일 형식이 아닙니다.', 'error');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = function() {
-                const img = new Image();
-                img.onload = function() {
-                    const activePose = STATE.planetActivePose;
-                    STATE.planetMascots[activePose] = img;
-                    
-                    // 등록 상태 뱃지 업데이트
-                    const badge = document.getElementById(`slot-status-${activePose}`);
-                    if (badge) {
-                        badge.innerHTML = "등록완료";
-                        badge.className = "absolute top-1 right-1 text-[8px] bg-emerald-500 text-white px-1 rounded-full";
-                    }
-                    showToast(`🪐 행성이의 '${activePose}' 포즈 이미지가 성공적으로 합성소에 등록되었습니다!`, 'success');
-                    updateSourceData();
-                };
-                img.src = reader.result;
-            };
-        }
-
-        // [NEW] 세부 피팅용 바인딩
-        function bindPlanetOffsetControls() {
-            const pose = STATE.planetActivePose;
-            const offsets = STATE.planetOffsets[pose];
-            
-            document.getElementById('planet-offset-x').value = offsets.x;
-            document.getElementById('planet-offset-y').value = offsets.y;
-            document.getElementById('planet-scale').value = offsets.scale;
-            document.getElementById('planet-rotate').value = offsets.rotate;
-
-            document.getElementById('planet-x-val').innerText = offsets.x;
-            document.getElementById('planet-y-val').innerText = offsets.y;
-            document.getElementById('planet-scale-val').innerText = offsets.scale + '%';
-            document.getElementById('planet-rotate-val').innerText = offsets.rotate + '°';
-        }
-
-        // [NEW] 슬라이더 조절 이벤트 연동
-        function adjustPlanetText(type, val) {
-            const pose = STATE.planetActivePose;
-            const numVal = parseInt(val);
-            if (type === 'x') {
-                STATE.planetOffsets[pose].x = numVal;
-                document.getElementById('planet-x-val').innerText = numVal;
-            } else if (type === 'y') {
-                STATE.planetOffsets[pose].y = numVal;
-                document.getElementById('planet-y-val').innerText = numVal;
-            } else if (type === 'scale') {
-                STATE.planetOffsets[pose].scale = numVal;
-                document.getElementById('planet-scale-val').innerText = numVal + '%';
-            } else if (type === 'rotate') {
-                STATE.planetOffsets[pose].rotate = numVal;
-                document.getElementById('planet-rotate-val').innerText = numVal + '°';
-            }
         }
 
         function handleImageDrop(e) {
@@ -1012,6 +894,69 @@
                 });
         }
 
+        // 커서 위치에 이모지 넣는 마스터 함수
+        function insertEmojiAtCursor(emoji) {
+            const textarea = document.getElementById('text-input');
+            if (!textarea) return;
+
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const originalText = textarea.value;
+
+            // 커서 분할 텍스트 대입
+            const before = originalText.substring(0, start);
+            const after = originalText.substring(end, originalText.length);
+
+            textarea.value = before + emoji + after;
+            
+            // 커서 위치 재조정 (이모지 길이만큼 뒤로)
+            const nextCursorPos = start + Array.from(emoji).length * 2; // 이모지는 서러게이트 문자쌍을 이룸
+            textarea.selectionStart = textarea.selectionEnd = before.length + emoji.length;
+            
+            textarea.focus();
+            updateSourceData();
+        }
+
+        // 이모지 카테고리 팔레트 토글
+        function toggleEmojiPalette() {
+            const el = document.getElementById('emoji-palette-popover');
+            if (el) {
+                el.classList.toggle('hidden');
+            }
+        }
+
+        // 지옥불 효과 활성화 시 블랙 백그라운드로 원클릭 동기화시키는 유틸
+        function handleFireEffectToggle(checked) {
+            if (checked) {
+                changeBgType('solid');
+                document.getElementById('bg-color-1').value = '#000000';
+                document.getElementById('bg-color-1-hex').value = '#000000';
+                updateSourceData();
+                showToast('🔥 지옥불 효과가 켜졌습니다. 배경이 자동으로 검은색으로 고정됩니다!', 'warning');
+            }
+        }
+
+        // 순차 재생 여부에 따라 루프 범위(초) 정밀 재지정
+        function recalculateDuration() {
+            if (STATE.currentTab === 'video') {
+                let duration = STATE.videoElement?.duration || 2.4;
+                if (duration > 4.0) duration = 4.0;
+                STATE.captureDuration = duration;
+            } else if (STATE.seqTextEnabled) {
+                const activeText = STATE.text;
+                const cleanStr = activeText ? activeText.replace(/\n/g, '') : '';
+                // Surrogate Pair 이모지 분할 대응 패치 (Array.from으로 글자 분해)
+                const charsList = Array.from(cleanStr);
+                const len = charsList.length > 0 ? charsList.length : 1;
+                // 글자당 0.3초 계산 (최소 0.6초 ~ 최대 4.8초 범위 캡핑)
+                STATE.captureDuration = Math.max(0.6, Math.min(4.8, len * STATE.seqDelaySec));
+            } else {
+                STATE.captureDuration = 2.4;
+            }
+            STATE.loopDuration = Math.round(STATE.captureDuration * 60);
+            updateCaptureDurationInfo();
+        }
+
         function updateCaptureDurationInfo() {
             const el = document.getElementById('capture-duration-text');
             if (el) {
@@ -1020,13 +965,24 @@
             }
         }
 
-        // 원클릭 템플릿 프리셋 세팅
+        // 양쪽 순차 재생 스위치 동기화 제어 함수
+        function toggleSeqText(checked) {
+            STATE.seqTextEnabled = checked;
+            const cbMain = document.getElementById('text-seq-toggle-main');
+            if (cbMain) cbMain.checked = checked;
+            
+            recalculateDuration();
+            showToast(checked ? '⏱️ 한 글자씩 순차 노출(0.3초 주기) 모드가 켜졌습니다.' : '⏱️ 전체 단어 동시 노출 모드로 복귀합니다.', 'info');
+        }
+
+        // 원클릭 템플릿 프리셋 세팅 (사용자가 이미 적어둔 이모지 텍스트는 그대로 보존되도록 변경)
         function applyPreset(presetType) {
             document.getElementById('effect-wiggle').checked = false;
             document.getElementById('effect-sparkle').checked = false;
             document.getElementById('effect-glitch').checked = false;
             document.getElementById('effect-wave').checked = false;
             document.getElementById('effect-party').checked = false;
+            document.getElementById('effect-fire').checked = false;
 
             if (presetType === 'party-hype') {
                 document.getElementById('effect-wiggle').checked = true;
@@ -1034,11 +990,9 @@
                 document.getElementById('effect-party').checked = true;
                 changeBgType('transparent');
                 
-                document.getElementById('text-input').value = 'PARTY!';
-                document.getElementById('planet-text-input').value = 'PARTY!';
                 document.getElementById('text-color').value = '#FFFFFF';
                 document.getElementById('text-stroke-color').value = '#000000';
-                showToast('🎉 파티 하이프 프리셋이 설정되었습니다!', 'success');
+                showToast('🎉 파티 하이프 프리셋이 설정되었습니다! (텍스트 보존)', 'success');
 
             } else if (presetType === 'neon-glitch') {
                 document.getElementById('effect-wiggle').checked = true;
@@ -1047,11 +1001,9 @@
                 
                 document.getElementById('bg-color-1').value = '#100c1e';
                 document.getElementById('bg-color-1-hex').value = '#100c1e';
-                document.getElementById('text-input').value = 'GLITCH';
-                document.getElementById('planet-text-input').value = 'GLITCH';
                 document.getElementById('text-color').value = '#39FF14';
                 document.getElementById('text-stroke-color').value = '#000000';
-                showToast('👾 사이버네틱 네온 글리치가 설정되었습니다!', 'success');
+                showToast('👾 사이버네틱 네온 글리치가 설정되었습니다! (텍스트 보존)', 'success');
 
             } else if (presetType === 'gold-star') {
                 document.getElementById('effect-sparkle').checked = true;
@@ -1062,11 +1014,9 @@
                 document.getElementById('bg-color-1-hex').value = '#F1C40F';
                 document.getElementById('bg-color-2').value = '#D35400';
                 document.getElementById('bg-color-2-hex').value = '#D35400';
-                document.getElementById('text-input').value = 'GOLD';
-                document.getElementById('planet-text-input').value = 'GOLD';
                 document.getElementById('text-color').value = '#FFFFFF';
                 document.getElementById('text-stroke-color').value = '#5D4037';
-                showToast('✨ 골드 럭셔리 샤인 효과가 장착되었습니다!', 'success');
+                showToast('✨ 골드 럭셔리 샤인 효과가 장착되었습니다! (텍스트 보존)', 'success');
 
             } else if (presetType === 'chill-wave') {
                 document.getElementById('effect-wave').checked = true;
@@ -1076,20 +1026,18 @@
                 document.getElementById('bg-color-1-hex').value = '#EA8D8D';
                 document.getElementById('bg-color-2').value = '#A890FE';
                 document.getElementById('bg-color-2-hex').value = '#A890FE';
-                document.getElementById('text-input').value = 'CHILL';
-                document.getElementById('planet-text-input').value = 'CHILL';
                 document.getElementById('text-color').value = '#FFFFFF';
                 document.getElementById('text-stroke-color').value = '#1E1E24';
-                showToast('🌊 부드러운 파스텔 크루즈 웨이브 완성!', 'success');
+                showToast('🌊 부드러운 파스텔 크루즈 웨이브 완성! (텍스트 보존)', 'success');
             }
 
             updateEffects();
             updateSourceData();
         }
 
-        // 탭 제어
+        // 탭 제어 (행성이 탭이 완전히 제외된 3개 리스트 관리)
         function switchTab(tabId) {
-            const tabs = ['text-tab', 'planet-text-tab', 'image-tab', 'video-tab'];
+            const tabs = ['text-tab', 'image-tab', 'video-tab'];
             tabs.forEach(id => {
                 const btn = document.getElementById(`tab-btn-${id.split('-')[0]}`);
                 if (btn) btn.className = "flex-1 min-w-[120px] py-3 px-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-all text-slate-500 hover:text-slate-800 hover:bg-white/50";
@@ -1099,7 +1047,6 @@
             if (activeBtn) activeBtn.className = "flex-1 min-w-[120px] py-3 px-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all bg-white text-slack-purple shadow-sm border border-slate-200/50";
 
             document.getElementById('panel-text')?.classList.add('hidden');
-            document.getElementById('panel-planet-text')?.classList.add('hidden');
             document.getElementById('panel-image')?.classList.add('hidden');
             document.getElementById('panel-video')?.classList.add('hidden');
 
@@ -1107,17 +1054,9 @@
             document.getElementById(`panel-${sourceName}`)?.classList.remove('hidden');
             STATE.currentTab = sourceName;
             
-            if (sourceName === 'video' && STATE.videoElement) {
-                let duration = STATE.videoElement.duration || 2.4;
-                if (duration > 4.0) duration = 4.0;
-                STATE.captureDuration = duration;
-            } else {
-                STATE.captureDuration = 2.4;
-            }
-            STATE.loopDuration = Math.round(STATE.captureDuration * 60);
-            updateCaptureDurationInfo();
+            recalculateDuration();
 
-            showToast(`🚀 편집 포커스: ${sourceName === 'planet-text' ? '행성이 특별관' : sourceName === 'text' ? '텍스트 빌더' : sourceName === 'image' ? '이미지 업로더' : '동영상 무잔상 인코더'}`, 'info');
+            showToast(`🚀 편집 포커스: ${sourceName === 'text' ? '텍스트 빌더' : sourceName === 'image' ? '이미지 업로더' : '동영상 무잔상 인코더'}`, 'info');
             updateSourceData();
         }
 
@@ -1146,7 +1085,7 @@
             const user2 = document.getElementById('slack-text-user2');
             
             if (theme === 'dark') {
-                if (area) area.className = "p-5 bg-slack-darkBg space-y-4 min-h-[140px] transition-all text-slate-300";
+                if (area) area.className = "p-6 bg-slack-darkBg space-y-5 min-h-[190px] transition-all text-slate-300 overflow-y-auto";
                 if (user1) user1.className = "text-sm font-black text-white";
                 if (user2) user2.className = "text-sm font-black text-white";
                 const dBtn = document.getElementById('slack-theme-dark');
@@ -1154,7 +1093,7 @@
                 const lBtn = document.getElementById('slack-theme-light');
                 if (lBtn) lBtn.className = "p-1 px-3 text-[10px] font-semibold rounded text-slate-400 hover:text-white";
             } else {
-                if (area) area.className = "p-5 bg-white space-y-4 min-h-[140px] transition-all text-slate-700";
+                if (area) area.className = "p-6 bg-white space-y-5 min-h-[190px] transition-all text-slate-700 overflow-y-auto";
                 if (user1) user1.className = "text-sm font-black text-slate-900";
                 if (user2) user2.className = "text-sm font-black text-slate-900";
                 const lBtn = document.getElementById('slack-theme-light');
@@ -1179,6 +1118,11 @@
             updateSourceData();
         }
 
+        // 폰트 패밀리에 시스템 컬러 이모지 폰트들을 보조 지원군으로 강제 결합
+        function getComputedFontFamily(family) {
+            return `${family}, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif`;
+        }
+
         function updateOptimizeToggle() {
             const toggle = document.getElementById('auto-compress-toggle');
             if (toggle) {
@@ -1192,16 +1136,11 @@
             STATE.effects.glitch = document.getElementById('effect-glitch')?.checked || false;
             STATE.effects.wave = document.getElementById('effect-wave')?.checked || false;
             STATE.effects.party = document.getElementById('effect-party')?.checked || false;
+            STATE.effects.fire = document.getElementById('effect-fire')?.checked || false;
         }
 
         function updateSourceData() {
             STATE.text = document.getElementById('text-input')?.value || '';
-            const lengthCount = document.getElementById('text-length-count');
-            if (lengthCount) lengthCount.innerHTML = `${STATE.text.length} / 10자`;
-
-            // 행성이 텍스트 파라미터 연동
-            STATE.planetText = document.getElementById('planet-text-input')?.value || 'COFFEE';
-            STATE.planetFontFamily = document.getElementById('planet-font-family')?.value || 'Arial Black, Impact, sans-serif';
             
             STATE.textColor = document.getElementById('text-color')?.value || '#FFFFFF';
             const textHex = document.getElementById('text-color-hex');
@@ -1224,6 +1163,8 @@
             STATE.imageFit = document.getElementById('image-fit')?.value || 'contain';
             STATE.imageRoundedMask = document.getElementById('image-rounded-mask')?.checked || false;
             STATE.videoFit = document.getElementById('video-fit')?.value || 'contain';
+
+            recalculateDuration();
         }
 
         function changeBgType(type) {
@@ -1310,6 +1251,9 @@
                 const delta = now - lastTime;
                 lastTime = now;
 
+                // 마스터 밀리초 타이머 누적
+                STATE.elapsedTimeSec += delta / 1000;
+                
                 STATE.time += (delta / 80) * (60 / 12.5);
                 
                 oCtx.clearRect(0, 0, 128, 128);
@@ -1326,92 +1270,54 @@
             requestAnimationFrame(renderFrame);
         }
 
-        // 손그림 스타일 가이드용 벡터 패스 드로잉 (이미지가 미등록 상태일 때 가이드라인 표현)
-        function drawVectorMascotFallback(ctx, pose) {
-            ctx.strokeStyle = '#000000';
-            ctx.lineWidth = 3.5;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
+        // 멀티라인 텍스트 드로잉 통합 헬퍼
+        function drawMultilineText(ctx, text, x, y, fontSize, fontFamily, strokeWidth, strokeColor, fillColor, lineGapRatio = 1.05) {
+            // 이모지 호환용 Fallback 폰트 패밀리 동적 매핑
+            const computedFont = getComputedFontFamily(fontFamily);
+            ctx.font = `900 ${fontSize}px ${computedFont}`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
 
-            // 행성이 몸통 (동그라미)
-            ctx.beginPath();
-            ctx.arc(64, 64, 30, 0, Math.PI * 2);
-            ctx.stroke();
+            const lines = text.split('\n');
+            const lineHeight = fontSize * lineGapRatio;
+            const totalHeight = (lines.length - 1) * lineHeight;
+            
+            // 전체 텍스트 블록이 (x, y) 중심에 위치하도록 Y축 보정
+            let currentY = y - totalHeight / 2;
 
-            // 귀여운 눈 두 점
-            ctx.fillStyle = '#000000';
-            ctx.beginPath();
-            ctx.arc(58, 58, 2.5, 0, Math.PI * 2);
-            ctx.arc(70, 58, 2.5, 0, Math.PI * 2);
-            ctx.fill();
-
-            // 띠 (사선 오발)
-            ctx.save();
-            ctx.translate(64, 68);
-            if (pose === 'ring') {
-                ctx.rotate(-0.05);
-            } else {
-                ctx.rotate(-0.25);
-            }
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 48, 8, 0, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.restore();
-
-            // 다리 두 개
-            ctx.beginPath();
-            ctx.moveTo(56, 94);
-            ctx.lineTo(54, 104);
-            ctx.moveTo(72, 94);
-            ctx.lineTo(74, 104);
-            ctx.stroke();
-
-            if (pose === 'coffee') {
-                // 커피 링 홀더 컵
-                ctx.beginPath();
-                ctx.rect(15, 50, 18, 22);
-                ctx.stroke();
-                ctx.font = 'bold 8px sans-serif';
-                ctx.fillText('☕', 19, 65);
-            } else if (pose === 'fairy') {
-                // 우측 위의 별요정
-                ctx.beginPath();
-                ctx.arc(104, 34, 8, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.font = '8px sans-serif';
-                ctx.fillText('✨', 100, 37);
-            } else if (pose === 'coding') {
-                // 미니 노트북
-                ctx.beginPath();
-                ctx.moveTo(40, 94);
-                ctx.lineTo(30, 80);
-                ctx.lineTo(55, 80);
-                ctx.stroke();
-            } else if (pose === 'ring') {
-                // 위로 들고 있는 두 팔
-                ctx.beginPath();
-                ctx.moveTo(48, 44);
-                ctx.quadraticCurveTo(44, 25, 48, 14);
-                ctx.moveTo(80, 44);
-                ctx.quadraticCurveTo(84, 25, 80, 14);
-                ctx.stroke();
-            }
+            lines.forEach((line) => {
+                if (strokeWidth > 0) {
+                    ctx.strokeStyle = strokeColor;
+                    ctx.lineWidth = strokeWidth;
+                    ctx.lineJoin = 'round';
+                    ctx.strokeText(line, x, currentY);
+                }
+                ctx.fillStyle = fillColor;
+                ctx.fillText(line, x, currentY);
+                currentY += lineHeight;
+            });
         }
 
         function drawBaseCanvas(ctx, frameTime) {
             const progress = (frameTime % STATE.loopDuration) / STATE.loopDuration;
             const angle = progress * Math.PI * 2;
 
-            // 배경 모드 렌더링
-            if (STATE.bgType === 'solid') {
-                ctx.fillStyle = STATE.bgColor1;
+            // 지옥불 효과 활성화 시 배경을 무조건 프리미엄 검은색으로 고정 강제
+            if (STATE.effects.fire) {
+                ctx.fillStyle = '#000000';
                 ctx.fillRect(0, 0, 128, 128);
-            } else if (STATE.bgType === 'gradient') {
-                const grad = ctx.createLinearGradient(0, 0, 128, 128);
-                grad.addColorStop(0, STATE.bgColor1);
-                grad.addColorStop(1, STATE.bgColor2);
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, 128, 128);
+            } else {
+                // 일반 배경 모드 렌더링
+                if (STATE.bgType === 'solid') {
+                    ctx.fillStyle = STATE.bgColor1;
+                    ctx.fillRect(0, 0, 128, 128);
+                } else if (STATE.bgType === 'gradient') {
+                    const grad = ctx.createLinearGradient(0, 0, 128, 128);
+                    grad.addColorStop(0, STATE.bgColor1);
+                    grad.addColorStop(1, STATE.bgColor2);
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, 128, 128);
+                }
             }
 
             if (STATE.effects.party) {
@@ -1419,6 +1325,50 @@
                 const hue = Math.floor((progress * 2) * 360) % 360;
                 ctx.fillStyle = `hsla(${hue}, 80%, 50%, 0.25)`;
                 ctx.fillRect(0, 0, 128, 128);
+                ctx.restore();
+            }
+
+            // 지옥불 효과가 활성화되어 있을 때 솟구치는 불꽃을 텍스트/이미지 뒤에 가산 렌더링
+            if (STATE.effects.fire) {
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter'; // 더욱 활활 타오르는 가산 합성 효과 적용
+                
+                // 1층: 가장 넓고 어두운 빨강 화염
+                ctx.fillStyle = 'rgba(235, 30, 20, 0.85)';
+                ctx.beginPath();
+                ctx.moveTo(0, 128);
+                for (let x = 0; x <= 128; x += 8) {
+                    const waveHeight = 44 + Math.sin(angle * 2.5 + x * 0.08) * 14 + Math.cos(angle * 1.5 - x * 0.04) * 7;
+                    ctx.lineTo(x, 128 - waveHeight);
+                }
+                ctx.lineTo(128, 128);
+                ctx.closePath();
+                ctx.fill();
+
+                // 2층: 중간 범위의 주황 화염
+                ctx.fillStyle = 'rgba(255, 120, 10, 0.9)';
+                ctx.beginPath();
+                ctx.moveTo(0, 128);
+                for (let x = 0; x <= 128; x += 8) {
+                    const waveHeight = 28 + Math.sin(angle * 3.5 + x * 0.12) * 9 + Math.cos(angle * 2.0 - x * 0.06) * 5;
+                    ctx.lineTo(x, 128 - waveHeight);
+                }
+                ctx.lineTo(128, 128);
+                ctx.closePath();
+                ctx.fill();
+
+                // 3층: 중심부의 가장 밝고 뜨거운 노랑 화염
+                ctx.fillStyle = 'rgba(255, 230, 20, 0.95)';
+                ctx.beginPath();
+                ctx.moveTo(0, 128);
+                for (let x = 0; x <= 128; x += 8) {
+                    const waveHeight = 15 + Math.sin(angle * 4.5 + x * 0.18) * 6 + Math.cos(angle * 3.0 - x * 0.09) * 4;
+                    ctx.lineTo(x, 128 - waveHeight);
+                }
+                ctx.lineTo(128, 128);
+                ctx.closePath();
+                ctx.fill();
+
                 ctx.restore();
             }
 
@@ -1443,61 +1393,28 @@
             ctx.rotate(rotate);
             ctx.scale(scale, scale);
 
-            // 타입별 이모지 캔버스 드로잉
+            // 타입별 이모지 캔버스 드로잉 (깔끔하게 3가지 분기)
             if (STATE.currentTab === 'text') {
-                ctx.font = `900 ${STATE.fontSize}px ${STATE.fontFamily}`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-
                 ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
                 ctx.shadowBlur = 4;
                 ctx.shadowOffsetX = 2;
                 ctx.shadowOffsetY = 2;
 
-                if (STATE.strokeWidth > 0) {
-                    ctx.strokeStyle = STATE.textStrokeColor;
-                    ctx.lineWidth = STATE.strokeWidth;
-                    ctx.strokeText(STATE.text, 0, 0);
+                // 한 글자씩 순차 노출 렌더링 및 이모지 대응 패치
+                let activeStr = STATE.text;
+                if (STATE.seqTextEnabled && activeStr.length > 0) {
+                    const cleanStr = activeStr.replace(/\n/g, '');
+                    // Array.from()을 사용하여 유니코드 다중 바이트 문자(이모지 등)를 한 장씩 정밀 파악
+                    const unicodeCharList = Array.from(cleanStr);
+                    if (unicodeCharList.length > 0) {
+                        const currentSec = STATE.elapsedTimeSec % STATE.captureDuration;
+                        const charIdx = Math.floor(currentSec / STATE.seqDelaySec) % unicodeCharList.length;
+                        activeStr = unicodeCharList[charIdx] || '';
+                    }
                 }
 
-                ctx.fillStyle = STATE.textColor;
-                ctx.fillText(STATE.text, 0, 0);
-
-            } else if (STATE.currentTab === 'planet-text') {
-                // [NEW] 행성이 특수 텍스트 합성 처리부
-                const activePose = STATE.planetActivePose;
-                const mascotImg = STATE.planetMascots[activePose];
-                const opt = STATE.planetOffsets[activePose];
-
-                // 1. 행성이 본체 그리기 (업로드 안됐을 시 수려한 벡터 가이드로 교체)
-                ctx.save();
-                ctx.translate(-64, -64);
-                if (mascotImg) {
-                    ctx.drawImage(mascotImg, 0, 0, 128, 128);
-                } else {
-                    drawVectorMascotFallback(ctx, activePose);
-                }
-                ctx.restore();
-
-                // 2. 프리셋 좌표를 기반으로 텍스트 오버레이 합성
-                ctx.save();
-                ctx.translate(opt.x, opt.y);
-                ctx.rotate(opt.rotate * Math.PI / 180);
-                
-                const finalFontSize = 26 * (opt.scale / 100);
-                ctx.font = `900 ${finalFontSize}px ${STATE.planetFontFamily}`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-
-                // 깔끔한 블랙 아웃라인을 둘러서 이모지 시인성 향상시킴
-                ctx.strokeStyle = '#000000';
-                ctx.lineWidth = 5;
-                ctx.lineJoin = 'round';
-                ctx.strokeText(STATE.planetText, 0, 0);
-
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillText(STATE.planetText, 0, 0);
-                ctx.restore();
+                // 멀티라인 렌더링 도입
+                drawMultilineText(ctx, activeStr, 0, 0, STATE.fontSize, STATE.fontFamily, STATE.strokeWidth, STATE.textStrokeColor, STATE.textColor);
 
             } else if (STATE.currentTab === 'image' && STATE.imageElement) {
                 drawFitSource(ctx, STATE.imageElement, STATE.imageFit, STATE.imageRoundedMask);
@@ -1669,6 +1586,10 @@
 
                 const simulatedTime = progress * STATE.loopDuration;
 
+                // 컴파일러 전용 타임라인 동기화 백업 클럭 세팅
+                const savedElapsedSec = STATE.elapsedTimeSec;
+                STATE.elapsedTimeSec = currentSec;
+
                 coCtx.save();
                 coCtx.scale(scale, scale);
                 drawBaseCanvas(coCtx, simulatedTime);
@@ -1678,6 +1599,9 @@
                 cCtx.scale(scale, scale);
                 applyEffectsChain(cCtx, compileOffscreen, coCtx, simulatedTime);
                 cCtx.restore();
+
+                // 클럭 원상복귀
+                STATE.elapsedTimeSec = savedElapsedSec;
 
                 const imgData = cCtx.getImageData(0, 0, renderWidth, renderHeight);
                 const pix = imgData.data;
@@ -1744,7 +1668,7 @@
             if (progressContainer) progressContainer.classList.remove('hidden');
             if (downloadBtn) {
                 downloadBtn.disabled = true;
-                downloadBtn.innerHTML = `<i class="fa-solid fa-gear animate-spin"></i> 원본 0초부터 프레임 탐색 중...`;
+                downloadBtn.innerHTML = `<i class="fa-solid fa-gear animate-spin"></i> 프레임 순차 분석 중...`;
             }
 
             let colors = 256;
@@ -1756,7 +1680,7 @@
             // 비동기 렌더링을 순차적으로 수행하기 위해 비동기 처리
             setTimeout(async () => {
                 try {
-                    if (statusLabel) statusLabel.innerHTML = "동영상 처음부터 순차 분석 렌더링 중...";
+                    if (statusLabel) statusLabel.innerHTML = "글자 순차 분석 동기 렌더링 중...";
                     
                     // 1단계 풀 퀄리티 렌더링
                     let compiledBytes = await runSinglePassEncoder(baseWidth, baseHeight, scale, colors, (percent) => {
@@ -1838,11 +1762,14 @@
         window.changeBgType = changeBgType;
         window.updateFormatSelect = updateFormatSelect;
         window.toggleDarkMode = toggleDarkMode;
+        window.toggleSeqText = toggleSeqText;
         
-        // [NEW] 마스코트 전용 바인딩 등록
-        window.triggerMascotUpload = triggerMascotUpload;
-        window.handleMascotUpload = handleMascotUpload;
-        window.adjustPlanetText = adjustPlanetText;
+        // 이모지 추가 연동 바인딩
+        window.insertEmojiAtCursor = insertEmojiAtCursor;
+        window.toggleEmojiPalette = toggleEmojiPalette;
+        
+        // 지옥불 바인딩 등록
+        window.handleFireEffectToggle = handleFireEffectToggle;
 
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
