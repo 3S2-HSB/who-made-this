@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Who Make This - 슬랙 커스텀 이모지 생성기</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Noto Sans KR -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slack: {
+                            purple: '#4A154B',
+                            aubergine: '#3F0E40',
+                            blue: '#1264A3',
+                            green: '#2EB67D',
+                            yellow: '#ECB22E',
+                            pink: '#E01E5A',
+                            darkBg: '#1A1D21',
+                            darkActive: '#272A2D'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans KR', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 커스텀 스크롤바 스타일 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: #1a1d21;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* 투명 격자무늬 배경 효과 */
+        .transparency-grid {
+            background-color: #ffffff;
+            background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%), linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e2e8f0 75%), linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+            background-size: 16px 16px;
+            background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+        }
+        .dark .transparency-grid {
+            background-color: #1e293b;
+            background-image: linear-gradient(45deg, #0f172a 25%, transparent 25%), linear-gradient(-45deg, #0f172a 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #0f172a 75%), linear-gradient(-45deg, transparent 75%, #0f172a 75%);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans transition-colors duration-200 antialiased min-h-screen">
+
+    <!-- 토스트 알림 컨테이너 -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- MP4 비디오 처리를 위한 숨겨진 비디오 버퍼 -->
+    <video id="source-video-buffer" class="hidden" loop muted playsinline crossorigin="anonymous"></video>
+
+    <div class="flex flex-col min-h-screen">
+        <!-- 상단 헤더 -->
+        <header class="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-40 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-tr from-slack-purple via-slack-pink to-slack-yellow rounded-xl flex items-center justify-center text-white shadow-md shadow-purple-200">
+                    <i class="fa-solid fa-face-laugh-squint text-xl animate-bounce"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-xl tracking-tight text-slate-900 flex items-center gap-2">
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-slack-purple to-slack-pink">Who Make This</span>
+                    </h1>
+                    <p class="text-xs text-slate-500 font-medium">슬랙 최적화 12.5 FPS 비디오 및 고해상도 텍스트 이모지 빌더</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-lg border border-slate-200">
+                    <button onclick="toggleDarkMode(false)" id="light-mode-btn" class="px-3 py-1 text-xs font-bold rounded bg-white shadow-sm text-slate-800 flex items-center gap-1.5 transition-all">
+                        <i class="fa-regular fa-sun text-yellow-500"></i> 라이트
+                    </button>
+                    <button onclick="toggleDarkMode(true)" id="dark-mode-btn" class="px-3 py-1 text-xs font-semibold rounded text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition-all">
+                        <i class="fa-solid fa-moon"></i> 다크
+                    </button>
+                </div>
+                <a href="https://slack.com" target="_blank" class="text-xs font-bold text-slate-600 hover:text-slack-purple flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 transition-all">
+                    슬랙 바로가기 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </a>
+            </div>
+        </header>
+
+        <!-- 메인 워크스페이스 -->
+        <main class="flex-1 max-w-[1600px] w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- 컨트롤 영역 (좌측) -->
+            <section class="lg:col-span-7 flex flex-col gap-6">
+                
+                <!-- 원클릭 프리셋 -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles text-amber-500 animate-pulse"></i>
+                            초고속 원클릭 템플릿 프리셋
+                        </h3>
+                        <span class="text-xs text-slate-400">인기 효과 사전 구성</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        <button onclick="applyPreset('party-hype')" class="p-2 border border-purple-100 bg-purple-50/50 rounded-xl text-left hover:scale-[1.02] active:scale-95 transition-all group">
+                            <span class="block text-xs font-black text-purple-700 mb-0.5 group-hover:text-purple-900">🌈 파티 하이프</span>
+                            <span class="block text-[10px] text-purple-500 truncate">무지개 + 흔들림 + 반짝임</span>
+                        </button>
+                        <button onclick="applyPreset('neon-glitch')" class="p-2 border border-cyan-100 bg-cyan-50/50 rounded-xl text-left hover:scale-[1.02] active:scale-95 transition-all group">
+                            <span class="block text-xs font-black text-cyan-700 mb-0.5 group-hover:text-cyan-900">👾 네온 글리치</span>
+                            <span class="block text-[10px] text-cyan-500 truncate">글리치 + 쿵쾅 + 비비드</span>
+                        </button>
+                        <button onclick="applyPreset('gold-star')" class="p-2 border border-amber-100 bg-amber-50/50 rounded-xl text-left hover:scale-[1.02] active:scale-95 transition-all group">
+                            <span class="block text-xs font-black text-amber-700 mb-0.5 group-hover:text-amber-900">✨ 골드 슈프림</span>
+                            <span class="block text-[10px] text-amber-500 truncate">반짝임극대화 + 부드러운물결</span>
+                        </button>
+                        <button onclick="applyPreset('chill-wave')" class="p-2 border border-rose-100 bg-rose-50/50 rounded-xl text-left hover:scale-[1.02] active:scale-95 transition-all group">
+                            <span class="block text-xs font-black text-rose-700 mb-0.5 group-hover:text-rose-900">🌊 파스텔 웨이브</span>
+                            <span class="block text-[10px] text-rose-500 truncate">물결 효과 + 그라데이션</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 탭 메뉴 영역 -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="flex flex-wrap border-b border-slate-100 bg-slate-50/50 p-2 gap-1.5">
+                        <button onclick="switchTab('text-tab')" id="tab-btn-text" class="flex-1 min-w-[120px] py-3 px-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all bg-white text-slack-purple shadow-sm border border-slate-200/50">
+                            <i class="fa-solid fa-font text-xs"></i> 텍스트 이모지
+                        </button>
+                        <button onclick="switchTab('image-tab')" id="tab-btn-image" class="flex-1 min-w-[120px] py-3 px-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-all text-slate-500 hover:text-slate-800 hover:bg-white/50">
+                            <i class="fa-solid fa-image text-xs"></i> 이미지 변환
+                        </button>
+                        <button onclick="switchTab('video-tab')" id="tab-btn-video" class="flex-1 min-w-[120px] py-3 px-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-all text-slate-500 hover:text-slate-800 hover:bg-white/50">
+                            <span class="relative">
+                                <i class="fa-solid fa-video text-xs"></i>
+                                <span class="absolute -top-1.5 -right-2 w-1.5 h-1.5 bg-pink-500 rounded-full animate-ping"></span>
+                            </span>
+                            비디오 업로드
+                        </button>
+                    </div>
+
+                    <div class="p-6">
+                        <!-- 1. 텍스트 이모지 설정 패널 -->
+                        <div id="panel-text" class="space-y-5">
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">이모지 텍스트 입력 (줄바꿈 가능)</label>
+                                    
+                                    <!-- 이모지 팔레트 토글 버튼 -->
+                                    <button onclick="toggleEmojiPalette()" class="text-xs font-bold text-slack-purple hover:text-slack-pink flex items-center gap-1 bg-purple-50 hover:bg-purple-100/80 px-2.5 py-1 rounded-lg border border-purple-200 transition-all">
+                                        <i class="fa-regular fa-face-smile text-sm"></i> 이모지 선택기
+                                    </button>
+                                </div>
+                                
+                                <div class="relative">
+                                    <textarea id="text-input" placeholder="텍스트를 입력하세요&#10;(Enter로 줄바꿈 가능)" oninput="updateSourceData()" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 font-black text-base focus:outline-none focus:border-slack-purple focus:bg-white transition-all text-slate-800 tracking-wide resize-none h-20">WOW! 🎉</textarea>
+                                </div>
+
+                                <!-- 퀵 이모지 삽입 트레이 및 전체 팝오버 패널 -->
+                                <div class="mt-2.5 space-y-2">
+                                    <div class="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                                        <span class="font-bold text-[10px] uppercase text-slate-400 mr-1 select-none">퀵 삽입:</span>
+                                        <button onclick="insertEmojiAtCursor('😂')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="웃기">😂</button>
+                                        <button onclick="insertEmojiAtCursor('👍')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="따봉">👍</button>
+                                        <button onclick="insertEmojiAtCursor('🎉')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="축하">🎉</button>
+                                        <button onclick="insertEmojiAtCursor('🔥')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="열정">🔥</button>
+                                        <button onclick="insertEmojiAtCursor('✨')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="반짝">✨</button>
+                                        <button onclick="insertEmojiAtCursor('🚀')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="로켓">🚀</button>
+                                        <button onclick="insertEmojiAtCursor('💻')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="코딩">💻</button>
+                                        <button onclick="insertEmojiAtCursor('🪐')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="행성">🪐</button>
+                                        <button onclick="insertEmojiAtCursor('💥')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="폭발">💥</button>
+                                        <button onclick="insertEmojiAtCursor('🚨')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="싸이렌">🚨</button>
+                                        <button onclick="insertEmojiAtCursor('💡')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="전구">💡</button>
+                                        <button onclick="insertEmojiAtCursor('❤️')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="하트">❤️</button>
+                                        <button onclick="insertEmojiAtCursor('💯')" class="hover:scale-125 transition-transform p-0.5 text-sm" title="백점">💯</button>
+                                    </div>
+
+                                    <!-- 토글식 대형 이모지 선택창 -->
+                                    <div id="emoji-palette-popover" class="hidden bg-white border border-slate-200 rounded-xl p-3 shadow-md max-h-[160px] overflow-y-auto space-y-3 transition-all">
+                                        <div>
+                                            <span class="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 select-none">표정 / 인물</span>
+                                            <div class="flex flex-wrap gap-2 text-base">
+                                                <button onclick="insertEmojiAtCursor('😀')" class="hover:scale-125 transition-all">😀</button>
+                                                <button onclick="insertEmojiAtCursor('🤣')" class="hover:scale-125 transition-all">🤣</button>
+                                                <button onclick="insertEmojiAtCursor('😍')" class="hover:scale-125 transition-all">😍</button>
+                                                <button onclick="insertEmojiAtCursor('🤩')" class="hover:scale-125 transition-all">🤩</button>
+                                                <button onclick="insertEmojiAtCursor('🤔')" class="hover:scale-125 transition-all">🤔</button>
+                                                <button onclick="insertEmojiAtCursor('😎')" class="hover:scale-125 transition-all">😎</button>
+                                                <button onclick="insertEmojiAtCursor('🤤')" class="hover:scale-125 transition-all">🤤</button>
+                                                <button onclick="insertEmojiAtCursor('🙏')" class="hover:scale-125 transition-all">🙏</button>
+                                                <button onclick="insertEmojiAtCursor('🙌')" class="hover:scale-125 transition-all">🙌</button>
+                                                <button onclick="insertEmojiAtCursor('👏')" class="hover:scale-125 transition-all">👏</button>
+                                                <button onclick="insertEmojiAtCursor('💪')" class="hover:scale-125 transition-all">💪</button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 select-none">사물 / 환경 / 심볼</span>
+                                            <div class="flex flex-wrap gap-2 text-base">
+                                                <button onclick="insertEmojiAtCursor('🍻')" class="hover:scale-125 transition-all">🍻</button>
+                                                <button onclick="insertEmojiAtCursor('☕')" class="hover:scale-125 transition-all">☕</button>
+                                                <button onclick="insertEmojiAtCursor('🍔')" class="hover:scale-125 transition-all">🍔</button>
+                                                <button onclick="insertEmojiAtCursor('🍕')" class="hover:scale-125 transition-all">🍕</button>
+                                                <button onclick="insertEmojiAtCursor('🌈')" class="hover:scale-125 transition-all">🌈</button>
+                                                <button onclick="insertEmojiAtCursor('☀️')" class="hover:scale-125 transition-all">☀️</button>
+                                                <button onclick="insertEmojiAtCursor('🍀')" class="hover:scale-125 transition-all">🍀</button>
+                                                <button onclick="insertEmojiAtCursor('💵')" class="hover:scale-125 transition-all">💵</button>
+                                                <button onclick="insertEmojiAtCursor('🎯')" class="hover:scale-125 transition-all">🎯</button>
+                                                <button onclick="insertEmojiAtCursor('🎉')" class="hover:scale-125 transition-all">🎉</button>
+                                                <button onclick="insertEmojiAtCursor('🎈')" class="hover:scale-125 transition-all">🎈</button>
+                                                <button onclick="insertEmojiAtCursor('✅')" class="hover:scale-125 transition-all">✅</button>
+                                                <button onclick="insertEmojiAtCursor('🔥')" class="hover:scale-125 transition-all">🔥</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 순차 표시 토글 (메인 텍스트 버전) -->
+                            <div class="p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 flex items-center justify-between">
+                                <div class="flex gap-2.5 items-center">
+                                    <span class="text-base">⏱️</span>
+                                    <div class="space-y-0.5">
+                                        <p class="text-xs font-bold text-indigo-950">한 글자씩 순차 재생</p>
+                                        <p class="text-[10px] text-indigo-500">입력된 글자가 0.3초마다 한 글자씩 차례대로 전환됩니다.</p>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="text-seq-toggle-main" onchange="toggleSeqText(this.checked)" class="sr-only peer">
+                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">폰트 스타일</label>
+                                    <select id="font-family" onchange="updateSourceData()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:border-slack-purple">
+                                        <option value="Arial Black, Impact, sans-serif">💥 Ultra Thick (Impact)</option>
+                                        <option value="Inter, system-ui, sans-serif">⚡ Neo-Modern (Inter)</option>
+                                        <option value="'Courier New', monospace">👾 Retro Code (Monospace)</option>
+                                        <option value="'Noto Sans KR', sans-serif">🎈 Clean Round (Noto KR)</option>
+                                        <option value="Georgia, serif">📜 Classic Luxury (Serif)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">글자 크기 (px)</label>
+                                    <div class="flex items-center gap-3">
+                                        <input type="range" id="font-size-slider" min="10" max="110" value="70" oninput="updateFontSize(this.value)" class="flex-1 accent-slack-purple cursor-pointer">
+                                        <span class="text-xs font-bold text-slate-700 w-8 text-right" id="font-size-val">70</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">텍스트 색상</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="color" id="text-color" value="#FFFFFF" oninput="updateSourceData()" class="w-10 h-10 p-0 border-0 rounded-lg cursor-pointer bg-transparent">
+                                        <input type="text" id="text-color-hex" value="#FFFFFF" oninput="syncColorInput('text-color', this.value)" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono uppercase focus:outline-none">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">텍스트 윤곽선 (테두리)</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="color" id="text-stroke-color" value="#000000" oninput="updateSourceData()" class="w-10 h-10 p-0 border-0 rounded-lg cursor-pointer bg-transparent">
+                                        <div class="flex-1 flex gap-2">
+                                            <input type="text" id="text-stroke-hex" value="#000000" oninput="syncColorInput('text-stroke-color', this.value)" class="w-2/3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono uppercase focus:outline-none">
+                                            <select id="stroke-width" onchange="updateSourceData()" class="w-1/3 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1 text-xs font-semibold focus:outline-none">
+                                                <option value="0">없음</option>
+                                                <option value="2">얇게</option>
+                                                <option value="5" selected>보통</option>
+                                                <option value="10">두껍게</option>
+                                                <option value="15">초특급</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. 정적 이미지 설정 패널 -->
+                        <div id="panel-image" class="hidden space-y-5">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">정적 이미지 업로드 (PNG, JPG, WebP)</label>
+                                <div id="image-dropzone" class="border-2 border-dashed border-slate-300 hover:border-slack-purple bg-slate-50/50 hover:bg-slate-50 rounded-2xl p-6 transition-all text-center cursor-pointer relative group">
+                                    <input type="file" id="image-file-input" accept="image/png, image/jpeg, image/jpg, image/webp" class="absolute inset-0 opacity-0 cursor-pointer">
+                                    <div class="space-y-2">
+                                        <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 group-hover:bg-purple-100 transition-all">
+                                            <i class="fa-solid fa-cloud-arrow-up text-slate-500 group-hover:text-slack-purple text-lg"></i>
+                                        </div>
+                                        <p class="text-sm font-bold text-slate-700">이곳에 파일을 드래그하거나 클릭하여 업로드</p>
+                                        <p class="text-xs text-slate-400">슬랙 최적화(128x128px)로 자동 스케일링됩니다.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">맞춤 비율 (Aspect Ratio)</label>
+                                    <select id="image-fit" onchange="updateSourceData()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none">
+                                        <option value="contain" selected>여백 메우기 (Contain)</option>
+                                        <option value="cover">자르기 및 채우기 (Cover)</option>
+                                        <option value="fill">비율 찌그러트리기 (Stretch)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">원형 마스크(둥글게)</label>
+                                    <div class="flex items-center gap-2 mt-2">
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" id="image-rounded-mask" onchange="updateSourceData()" class="sr-only peer">
+                                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slack-purple"></div>
+                                            <span class="ml-3 text-sm font-medium text-slate-600">둥근 프로필 마스크</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. MP4 비디오 설정 패널 -->
+                        <div id="panel-video" class="hidden space-y-5">
+                            <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-200 flex items-start gap-3">
+                                <i class="fa-solid fa-shield-halved text-emerald-600 text-lg mt-0.5 animate-pulse"></i>
+                                <div class="space-y-0.5">
+                                    <p class="text-xs font-bold text-emerald-800">12.5 FPS 정밀 동적 추출 방식 구동 중</p>
+                                    <p class="text-[11px] text-emerald-700 leading-relaxed">이전 시점 캡처 방식 대신, 다운로드 버튼을 누르면 동영상의 <strong>가장 처음(0초)부터 끝까지</strong> 12.5 FPS 간격으로 정밀 서치하여 완벽히 연결되는 이모지 파일을 생성합니다.</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">비디오 업로드 (MP4 포맷 권장)</label>
+                                <div id="video-dropzone" class="border-2 border-dashed border-slate-300 hover:border-slack-purple bg-slate-50/50 hover:bg-slate-50 rounded-2xl p-6 transition-all text-center cursor-pointer relative group">
+                                    <input type="file" id="video-file-input" accept="video/mp4, video/quicktime, video/webm" class="absolute inset-0 opacity-0 cursor-pointer">
+                                    <div class="space-y-2">
+                                        <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 group-hover:bg-purple-100 transition-all">
+                                            <i class="fa-solid fa-file-video text-slate-500 group-hover:text-slack-purple text-lg"></i>
+                                        </div>
+                                        <p class="text-sm font-bold text-slate-700" id="video-file-name">이곳에 MP4 동영상을 올리거나 클릭</p>
+                                        <p class="text-xs text-slate-400">초고속 정밀 프레임 디코딩 자동화</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">비디오 비율 스케일 방식</label>
+                                <select id="video-fit" onchange="updateSourceData()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none">
+                                    <option value="contain" selected>맞춤 여백 (Contain)</option>
+                                    <option value="cover">꽉 채우기 (Cover)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 애니메이션 및 시각 효과 설정 -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
+                    <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                        <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic text-slack-pink"></i>
+                            애니메이션 & 시각 효과 모드 (GIF/움직임 제어)
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold text-slate-500">출력 포맷:</span>
+                            <span class="text-xs font-extrabold bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full border border-purple-200 shadow-sm" id="format-badge">GIF 애니메이션</span>
+                        </div>
+                    </div>
+
+                    <!-- 커스텀 토글 그리드 (6개 그리드로 세련되게 정렬) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <!-- Toggle 1: Wiggle / Movement -->
+                        <div class="p-4 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/30 transition-all flex items-center justify-between">
+                            <div class="flex gap-3">
+                                <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                                    <i class="fa-solid fa-arrows-spin text-lg animate-spin"></i>
+                                </div>
+                                <div class="space-y-0.5">
+                                    <p class="text-xs font-bold text-slate-800">움직임 추가 (Wiggle/Bounce)</p>
+                                    <p class="text-[10px] text-slate-400">심리스 루프 춤추는 상하좌우 반동</p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="effect-wiggle" checked onchange="updateEffects()" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                            </label>
+                        </div>
+
+                        <!-- Toggle 2: Sparkle (스위치 깨짐 현상 완벽 복구) -->
+                        <div class="p-4 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/30 transition-all flex items-center justify-between">
+                            <div class="flex gap-3">
+                                <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500">
+                                    <i class="fa-solid fa-star text-lg"></i>
+                                </div>
+                                <div class="space-y-0.5">
+                                    <p class="text-xs font-bold text-slate-800">반짝임 효과 (Sparkle)</p>
+                                    <p class="text-[10px] text-slate-400">사방으로 퍼지는 끊김 없는 별빛</p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="effect-sparkle" onchange="updateEffects()" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                            </label>
+                        </div>
+
+                        <!-- Toggle 3: Glitch -->
+                        <div class="p-4 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/30 transition-all flex items-center justify-between">
+                            <div class="flex gap-3">
+                                <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+                                    <i class="fa-solid fa-bolt text-lg animate-pulse"></i>
+                                </div>
+                                <div class="space-y-0.5">
+                                    <p class="text-xs font-bold text-slate-800">글리치 효과 (Glitch Cyber)</p>
+                                    <p class="text-[10px] text-slate-400">SF영화 속 시그널 오류 패턴</p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="effect-glitch" onchange="updateEffects()" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                            </label>
+                        </div>
+
+                        <!-- Toggle 4: Wave -->
+                        <div class="p-4 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/30 transition-all flex items-center justify-between">
+                            <div class="flex gap-3">
+                                <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+                                    <i class="fa-solid fa-water text-lg"></i>
+                                </div>
+                                <div class="space-y-0.5">
+                                    <p class="text-xs font-bold text-slate-800">물결 효과 (Wave Wave)</p>
+                                    <p class="text-[10px] text-slate-400">부드럽게 일렁이는 동기화 웨이브</p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="effect-wave" onchange="updateEffects()" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <!-- Toggle 5: Random (Party Mode) -->
+                        <div class="p-4 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/30 transition-all flex items-center justify-between">
+                            <div class="flex gap-3">
+                                <div class="w-10 h-10 bg-pink-50 rounded-xl flex items-center justify-center text-pink-600">
+                                    <i class="fa-solid fa-child-reaching text-lg animate-bounce"></i>
+                                </div>
+                                <div class="space-y-0.5">
+                                    <p class="text-xs font-bold text-slate-800">랜덤 파티 효과 (Party Hue)</p>
+                                    <p class="text-[10px] text-slate-400">무지개색 사이키 조명 회전 효과</p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="effect-party" onchange="updateEffects()" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+                            </label>
+                        </div>
+
+                        <!-- Toggle 6: Fire (Hellfire) -->
+                        <div class="p-4 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/30 transition-all flex items-center justify-between">
+                            <div class="flex gap-3">
+                                <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600">
+                                    <i class="fa-solid fa-fire text-lg animate-pulse"></i>
+                                </div>
+                                <div class="space-y-0.5">
+                                    <p class="text-xs font-bold text-slate-800">지옥불 효과 (Hellfire)</p>
+                                    <p class="text-[10px] text-slate-400">검정 배경에 활활 타오르는 불꽃 루프</p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="effect-fire" onchange="updateEffects(); handleFireEffectToggle(this.checked)" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 배경 꾸미기 커스터마이저 -->
+                    <div class="space-y-3 pt-3 border-t border-slate-100">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">배경 모드 및 색상 선택</label>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="changeBgType('transparent')" id="bg-btn-transparent" class="px-4 py-2 text-xs font-bold rounded-xl border border-slate-300 bg-slate-100 text-slate-800 transition-all flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-border-none"></i> 투명 배경
+                            </button>
+                            <button onclick="changeBgType('solid')" id="bg-btn-solid" class="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-slack-purple"></span> 단색 배경
+                            </button>
+                            <button onclick="changeBgType('gradient')" id="bg-btn-gradient" class="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500"></span> 그라데이션
+                            </button>
+                        </div>
+
+                        <!-- 서브 색상 셀렉터 -->
+                        <div id="bg-color-selectors" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase" id="bg-color-1-label">기본 배경 색상</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" id="bg-color-1" value="#4A154B" oninput="updateSourceData()" class="w-10 h-10 p-0 border-0 rounded-lg cursor-pointer bg-transparent">
+                                    <input type="text" id="bg-color-1-hex" value="#4A154B" oninput="syncColorInput('bg-color-1', this.value)" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+                            <div id="bg-color-2-container" class="hidden">
+                                <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase">보조 그라데이션 색상</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" id="bg-color-2" value="#E01E5A" oninput="updateSourceData()" class="w-10 h-10 p-0 border-0 rounded-lg cursor-pointer bg-transparent">
+                                    <input type="text" id="bg-color-2-hex" value="#E01E5A" oninput="syncColorInput('bg-color-2', this.value)" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 미리보기 모니터 영역 (우측) -->
+            <section class="lg:col-span-5 flex flex-col gap-6">
+                <!-- 프리뷰 카드 (h-full 제거로 잘림 해결) -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                    <div class="bg-slate-50/50 border-b border-slate-100 p-4 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-red-400"></span>
+                            <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+                            <span class="w-3 h-3 rounded-full bg-green-400"></span>
+                            <span class="text-xs font-bold text-slate-500 ml-2">실시간 이모지 인스펙터</span>
+                        </div>
+                        <div class="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5">
+                            <button onclick="changeZoom(1)" class="p-1 px-2.5 text-xs font-bold rounded hover:bg-slate-100" id="zoom-btn-1">1X</button>
+                            <button onclick="changeZoom(2)" class="p-1 px-2.5 text-xs font-semibold rounded hover:bg-slate-100" id="zoom-btn-2">2X</button>
+                            <button onclick="changeZoom(4)" class="p-1 px-2.5 text-xs font-semibold rounded hover:bg-slate-100 bg-slate-100" id="zoom-btn-4">4X</button>
+                        </div>
+                    </div>
+
+                    <!-- 캔버스 프레임 컨테이너 -->
+                    <div class="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50 relative">
+                        <div class="relative group">
+                            <!-- 무지개 네온 발광 -->
+                            <div class="absolute -inset-2 bg-gradient-to-r from-slack-purple to-slack-pink rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000"></div>
+                            
+                            <!-- 그리드 프레임 테두리 -->
+                            <div class="relative border-4 border-slate-800 bg-slate-900 rounded-2xl p-6 shadow-2xl flex items-center justify-center">
+                                <div class="transparency-grid rounded-lg border border-slate-700/50 p-1 flex items-center justify-center overflow-hidden transition-all duration-300" id="canvas-zoom-wrapper" style="width: 256px; height: 256px;">
+                                    <canvas id="emoji-canvas" width="128" height="128" class="w-full h-full object-contain image-render-pixelated"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 캔버스 제원 정보 -->
+                        <div class="mt-6 flex gap-4 text-center">
+                            <div>
+                                <span class="block text-[10px] uppercase tracking-wider font-extrabold text-slate-400">산출 크기</span>
+                                <span class="text-xs font-black text-slate-700">128 x 128 px</span>
+                            </div>
+                            <div class="w-px bg-slate-200 self-stretch"></div>
+                            <div>
+                                <span class="block text-[10px] uppercase tracking-wider font-extrabold text-slate-400">프레임 레이트</span>
+                                <span class="text-xs font-black text-slate-700">12.5 FPS (고정)</span>
+                            </div>
+                            <div class="w-px bg-slate-200 self-stretch"></div>
+                            <div>
+                                <span class="block text-[10px] uppercase tracking-wider font-extrabold text-slate-400">상태</span>
+                                <span class="text-xs font-black text-emerald-600 flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span> Live Loops
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 익스포트 패널 -->
+                    <div class="p-6 border-t border-slate-100 bg-white space-y-4">
+                        <!-- 재생 길이 가이드 -->
+                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-clock text-slack-purple"></i>
+                                    루프 및 캡처 범위 정보
+                                </label>
+                                <span class="text-xs font-extrabold text-slack-purple" id="capture-duration-text">자동 추출 대기 중</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 leading-relaxed">
+                                비디오를 업로드하거나 순차 텍스트 모드를 켤 경우 최적의 루프 길이를 자동으로 계산해 끊김 없는 부드러운 움짤로 제작해 드립니다.
+                            </p>
+                            
+                            <div class="flex items-center justify-between pt-2 border-t border-slate-200/50">
+                                <label class="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                    슬랙 128KB 이하 강제 자동 압축
+                                </label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="auto-compress-toggle" checked onchange="updateOptimizeToggle()" class="sr-only peer">
+                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">이름 지정 (Slack Alias)</label>
+                                <div class="relative">
+                                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">:</span>
+                                    <input type="text" id="emoji-alias" value="custom_hype_emoji" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-6 pr-6 py-2.5 text-xs font-mono focus:outline-none focus:border-slack-purple">
+                                    <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">:</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">저장 형식</label>
+                                <select id="export-format" onchange="updateFormatSelect(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold focus:outline-none">
+                                    <option value="gif">GIF (움직임 포함)</option>
+                                    <option value="png">PNG (정적 투명 이미지)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 컴파일 다운로드 버튼 -->
+                        <div class="space-y-2">
+                            <button onclick="compileAndDownload()" id="download-btn" class="w-full bg-gradient-to-r from-slack-purple to-slack-pink hover:from-slate-950 hover:to-slate-950 text-white font-extrabold text-sm py-4 px-6 rounded-xl shadow-lg shadow-purple-200 hover:shadow-none transition-all duration-300 flex items-center justify-center gap-2 transform active:scale-95">
+                                <i class="fa-solid fa-cloud-arrow-down text-base"></i>
+                                <span>슬랙 최적화 이모지 다운로드</span>
+                            </button>
+                            <p class="text-[11px] text-center text-slate-400">클릭 시 0초부터 프레임 단위 정밀 분석이 시작됩니다 (진행률 노출)</p>
+                        </div>
+
+                        <!-- 프로그레스 바 -->
+                        <div id="compiling-progress-bar" class="hidden space-y-2 pt-2">
+                            <div class="flex items-center justify-between text-xs font-semibold text-slate-700">
+                                <span class="flex items-center gap-1.5">
+                                    <i class="fa-solid fa-spinner animate-spin text-slack-purple"></i>
+                                    <span id="progress-status-label">원본 디코딩 후 컴파일 중...</span>
+                                </span>
+                                <span id="progress-percent">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200">
+                                <div id="progress-indicator" class="bg-gradient-to-r from-slack-purple to-slack-pink h-full w-[0%] transition-all"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 슬랙 메시지 시뮬레이터 (잘림 방지 패널 구조 최적화) -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                    <div class="border-b border-slate-100 p-4 bg-slate-50/50 flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-brands fa-slack text-slack-purple text-base"></i>
+                            슬랙 실제 대화방 미리보기 (Slack Channel Simulator)
+                        </span>
+                        <div class="flex bg-slate-200/60 p-0.5 rounded-lg border border-slate-300/40">
+                            <button onclick="toggleSlackMockTheme('light')" id="slack-theme-light" class="p-1 px-3 text-[10px] font-bold rounded bg-white text-slate-800 shadow-xs">라이트</button>
+                            <button onclick="toggleSlackMockTheme('dark')" id="slack-theme-dark" class="p-1 px-3 text-[10px] font-semibold rounded text-slate-500 hover:text-slate-800">다크</button>
+                        </div>
+                    </div>
+
+                    <!-- 대화방 내용 시뮬레이션 -->
+                    <div id="slack-mockup-area" class="p-6 bg-white space-y-5 min-h-[190px] transition-all overflow-y-auto">
+                        
+                        <!-- Row 1 -->
+                        <div class="flex gap-3">
+                            <div class="w-9 h-9 bg-violet-600 rounded flex-shrink-0 flex items-center justify-center text-white text-xs font-black">
+                                BOT
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-sm font-black text-slate-900" id="slack-text-user1">이모지 봇</span>
+                                    <span class="text-[10px] text-slate-400 font-semibold bg-slate-100 px-1.5 py-0.5 rounded">앱</span>
+                                    <span class="text-[10px] text-slate-400">오후 1:20</span>
+                                </div>
+                                <div class="text-sm text-slate-700 leading-relaxed">
+                                    여러분, 새로 커스텀 등록할 이모지 시안 확인해주세요!
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Row 2 -->
+                        <div class="flex gap-3 pb-2">
+                            <div class="w-9 h-9 bg-indigo-500 rounded flex-shrink-0 flex items-center justify-center text-white text-xs font-black uppercase">
+                                ME
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-sm font-black text-slate-900" id="slack-text-user2">디자이너 (나)</span>
+                                    <span class="text-[10px] text-slate-400">오후 1:21</span>
+                                </div>
+                                <div class="text-sm text-slate-700 flex flex-wrap items-center gap-2 leading-relaxed">
+                                    방금 제작 완료했습니다! 어때요? 
+                                    <span class="inline-flex items-center justify-center p-0.5 bg-slate-100 dark:bg-slate-700 rounded transition-all select-none hover:scale-125 hover:bg-slate-200" style="width: 24px; height: 24px;" title="이모지 미리보기">
+                                        <canvas id="slack-mock-emoji-canvas" width="24" height="24" class="w-5 h-5 object-contain"></canvas>
+                                    </span>
+                                    진짜 예쁘게 잘 적용됐죠? ㅎㅎ
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- 푸터 -->
+        <footer class="bg-white border-t border-slate-200 py-6 px-6 text-center text-xs text-slate-400 space-y-2">
+            <p>Who Make This - All assets render locally in high-performance Web Canvas. Slack is a trademark of Salesforce, Inc.</p>
+            <p>Built with ❤️ for digital creativity, playful teams, and epic workplace communications.</p>
+        </footer>
+    </div>
+
+    <!-- 순수 ES 모듈 기반 동기화 기프 라이브러리 탑재 -->
+    <script type="module">
+        import { GIFEncoder, quantize, applyPalette } from 'https://unpkg.com/gifenc@1.0.3/dist/gifenc.esm.js';
+
+        // 앱 데이터 코어 매니저
+        const STATE = {
+            currentTab: 'text', // text, image, video
+            text: 'WOW! 🎉',
+            textColor: '#FFFFFF',
+            textStrokeColor: '#000000',
+            strokeWidth: 5,
+            fontSize: 70,
+            fontFamily: 'Arial Black, Impact, sans-serif',
+            
+            // 한 글자씩 순차 노출 전용 속성
+            seqTextEnabled: false,
+            seqDelaySec: 0.3, // 0.3초당 한 글자 고정
+            elapsedTimeSec: 0, // 경과 시간(초) 마스터 클럭
+
+            // 이미지 엘리먼트 및 정렬
+            imageElement: null,
+            imageFit: 'contain',
+            imageRoundedMask: false,
+
+            // 비디오 엘리먼트 및 정렬
+            videoElement: null,
+            videoFit: 'contain',
+            videoPlaying: false,
+
+            // 배경 모드 설정
+            bgType: 'transparent', // transparent, solid, gradient
+            bgColor1: '#4A154B',
+            bgColor2: '#E01E5A',
+
+            // 애니메이션 비주얼 스위치
+            effects: {
+                wiggle: true,
+                sparkle: false,
+                glitch: false,
+                wave: false,
+                party: false,
+                fire: false
+            },
+
+            // 시뮬레이터 줌 스케일링
+            zoom: 4,
+
+            // 12.5 FPS 전용 시간 설계 변수
+            captureDuration: 2.4, // 기본 비디오 미지정 시 주기 (2.4초 = 30프레임)
+            loopDuration: 144, // 논리 연산 속도
+            autoOptimize: true, // 128KB 강제 자동 경량화 활성화
+
+            time: 0,
+            sparkles: [], // 반짝이별 보관함
+            isCompiling: false,
+            darkMode: false
+        };
+
+        // 완벽 순환 루프 구성을 위해 파티클 고정 시드 할당
+        for (let i = 0; i < 8; i++) {
+            STATE.sparkles.push({
+                x: Math.random() * 128,
+                initialY: Math.random() * 128,
+                size: Math.random() * 8 + 4,
+                phase: Math.random() * Math.PI * 2,
+                speed: Math.random() * 0.05 + 0.02
+            });
+        }
+
+        window.onload = function() {
+            initEventHandlers();
+            startRenderLoop();
+            updateCaptureDurationInfo();
+            showToast('🎨 슬랙 최적화 인코더가 작동 준비되었습니다!', 'info');
+        };
+
+        function initEventHandlers() {
+            const imageDropzone = document.getElementById('image-dropzone');
+            const videoDropzone = document.getElementById('video-dropzone');
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                imageDropzone?.addEventListener(eventName, preventDefaults, false);
+                videoDropzone?.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                imageDropzone?.addEventListener(eventName, () => imageDropzone.classList.add('border-slack-purple', 'bg-purple-50/10'), false);
+                videoDropzone?.addEventListener(eventName, () => videoDropzone.classList.add('border-slack-purple', 'bg-purple-50/10'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                imageDropzone?.addEventListener(eventName, () => imageDropzone.classList.remove('border-slack-purple', 'bg-purple-50/10'), false);
+                videoDropzone?.addEventListener(eventName, () => videoDropzone.classList.remove('border-slack-purple', 'bg-purple-50/10'), false);
+            });
+
+            imageDropzone?.addEventListener('drop', handleImageDrop, false);
+            videoDropzone?.addEventListener('drop', handleVideoDrop, false);
+
+            document.getElementById('image-file-input')?.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) handleImageFile(e.target.files[0]);
+            });
+            document.getElementById('video-file-input')?.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) handleVideoFile(e.target.files[0]);
+            });
+        }
+
+        function handleImageDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) handleImageFile(files[0]);
+        }
+
+        function handleImageFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showToast('❌ 올바른 이미지 형식이 아닙니다!', 'error');
+                return;
+            }
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function() {
+                const img = new Image();
+                img.onload = function() {
+                    STATE.imageElement = img;
+                    showToast('🖼️ 업로드 이미지가 캔버스에 등록되었습니다.', 'success');
+                    updateSourceData();
+                };
+                img.src = reader.result;
+            };
+        }
+
+        function handleVideoDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) handleVideoFile(files[0]);
+        }
+
+        function handleVideoFile(file) {
+            if (!file.type.startsWith('video/')) {
+                showToast('❌ 올바른 비디오 포맷(MP4)이 아닙니다!', 'error');
+                return;
+            }
+
+            const videoElement = document.getElementById('source-video-buffer');
+            const fileURL = URL.createObjectURL(file);
+            
+            videoElement.src = fileURL;
+            videoElement.muted = true;
+            videoElement.playsInline = true;
+            videoElement.loop = true;
+            
+            // 로드 대기 후 제원 설정
+            videoElement.onloadedmetadata = function() {
+                let duration = videoElement.duration || 2.4;
+                if (duration > 4.0) duration = 4.0; // 성능 및 용량을 위해 최대 4초 고정
+                
+                STATE.captureDuration = duration;
+                STATE.loopDuration = Math.round(duration * 60);
+                updateCaptureDurationInfo();
+            };
+
+            videoElement.play()
+                .then(() => {
+                    STATE.videoElement = videoElement;
+                    STATE.videoPlaying = true;
+                    document.getElementById('video-file-name').innerHTML = `🎬 ${file.name} (12.5 FPS 완벽 캡처 모드)`;
+                    showToast('🎥 동영상 분석 완료! 실시간 렌더링 동기화 성공.', 'success');
+                    updateSourceData();
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast('❌ 비디오 자동 탐색 재생 중 문제가 발생했습니다.', 'error');
+                });
+        }
+
+        // 커서 위치에 이모지 넣는 마스터 함수
+        function insertEmojiAtCursor(emoji) {
+            const textarea = document.getElementById('text-input');
+            if (!textarea) return;
+
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const originalText = textarea.value;
+
+            // 커서 분할 텍스트 대입
+            const before = originalText.substring(0, start);
+            const after = originalText.substring(end, originalText.length);
+
+            textarea.value = before + emoji + after;
+            
+            // 커서 위치 재조정 (이모지 길이만큼 뒤로)
+            const nextCursorPos = start + Array.from(emoji).length * 2; // 이모지는 서러게이트 문자쌍을 이룸
+            textarea.selectionStart = textarea.selectionEnd = before.length + emoji.length;
+            
+            textarea.focus();
+            updateSourceData();
+        }
+
+        // 이모지 카테고리 팔레트 토글
+        function toggleEmojiPalette() {
+            const el = document.getElementById('emoji-palette-popover');
+            if (el) {
+                el.classList.toggle('hidden');
+            }
+        }
+
+        // 지옥불 효과 활성화 시 블랙 백그라운드로 원클릭 동기화시키는 유틸
+        function handleFireEffectToggle(checked) {
+            if (checked) {
+                changeBgType('solid');
+                document.getElementById('bg-color-1').value = '#000000';
+                document.getElementById('bg-color-1-hex').value = '#000000';
+                updateSourceData();
+                showToast('🔥 지옥불 효과가 켜졌습니다. 배경이 자동으로 검은색으로 고정됩니다!', 'warning');
+            }
+        }
+
+        // 순차 재생 여부에 따라 루프 범위(초) 정밀 재지정
+        function recalculateDuration() {
+            if (STATE.currentTab === 'video') {
+                let duration = STATE.videoElement?.duration || 2.4;
+                if (duration > 4.0) duration = 4.0;
+                STATE.captureDuration = duration;
+            } else if (STATE.seqTextEnabled) {
+                const activeText = STATE.text;
+                const cleanStr = activeText ? activeText.replace(/\n/g, '') : '';
+                // Surrogate Pair 이모지 분할 대응 패치 (Array.from으로 글자 분해)
+                const charsList = Array.from(cleanStr);
+                const len = charsList.length > 0 ? charsList.length : 1;
+                // 글자당 0.3초 계산 (최소 0.6초 ~ 최대 4.8초 범위 캡핑)
+                STATE.captureDuration = Math.max(0.6, Math.min(4.8, len * STATE.seqDelaySec));
+            } else {
+                STATE.captureDuration = 2.4;
+            }
+            STATE.loopDuration = Math.round(STATE.captureDuration * 60);
+            updateCaptureDurationInfo();
+        }
+
+        function updateCaptureDurationInfo() {
+            const el = document.getElementById('capture-duration-text');
+            if (el) {
+                const frames = Math.round(STATE.captureDuration * 12.5);
+                el.innerHTML = `${STATE.captureDuration.toFixed(1)}초 (총 ${frames}프레임 순차 추출)`;
+            }
+        }
+
+        // 양쪽 순차 재생 스위치 동기화 제어 함수
+        function toggleSeqText(checked) {
+            STATE.seqTextEnabled = checked;
+            const cbMain = document.getElementById('text-seq-toggle-main');
+            if (cbMain) cbMain.checked = checked;
+            
+            recalculateDuration();
+            showToast(checked ? '⏱️ 한 글자씩 순차 노출(0.3초 주기) 모드가 켜졌습니다.' : '⏱️ 전체 단어 동시 노출 모드로 복귀합니다.', 'info');
+        }
+
+        // 원클릭 템플릿 프리셋 세팅 (사용자가 이미 적어둔 이모지 텍스트는 그대로 보존되도록 변경)
+        function applyPreset(presetType) {
+            document.getElementById('effect-wiggle').checked = false;
+            document.getElementById('effect-sparkle').checked = false;
+            document.getElementById('effect-glitch').checked = false;
+            document.getElementById('effect-wave').checked = false;
+            document.getElementById('effect-party').checked = false;
+            document.getElementById('effect-fire').checked = false;
+
+            if (presetType === 'party-hype') {
+                document.getElementById('effect-wiggle').checked = true;
+                document.getElementById('effect-sparkle').checked = true;
+                document.getElementById('effect-party').checked = true;
+                changeBgType('transparent');
+                
+                document.getElementById('text-color').value = '#FFFFFF';
+                document.getElementById('text-stroke-color').value = '#000000';
+                showToast('🎉 파티 하이프 프리셋이 설정되었습니다! (텍스트 보존)', 'success');
+
+            } else if (presetType === 'neon-glitch') {
+                document.getElementById('effect-wiggle').checked = true;
+                document.getElementById('effect-glitch').checked = true;
+                changeBgType('solid');
+                
+                document.getElementById('bg-color-1').value = '#100c1e';
+                document.getElementById('bg-color-1-hex').value = '#100c1e';
+                document.getElementById('text-color').value = '#39FF14';
+                document.getElementById('text-stroke-color').value = '#000000';
+                showToast('👾 사이버네틱 네온 글리치가 설정되었습니다! (텍스트 보존)', 'success');
+
+            } else if (presetType === 'gold-star') {
+                document.getElementById('effect-sparkle').checked = true;
+                document.getElementById('effect-wave').checked = true;
+                changeBgType('gradient');
+                
+                document.getElementById('bg-color-1').value = '#F1C40F';
+                document.getElementById('bg-color-1-hex').value = '#F1C40F';
+                document.getElementById('bg-color-2').value = '#D35400';
+                document.getElementById('bg-color-2-hex').value = '#D35400';
+                document.getElementById('text-color').value = '#FFFFFF';
+                document.getElementById('text-stroke-color').value = '#5D4037';
+                showToast('✨ 골드 럭셔리 샤인 효과가 장착되었습니다! (텍스트 보존)', 'success');
+
+            } else if (presetType === 'chill-wave') {
+                document.getElementById('effect-wave').checked = true;
+                changeBgType('gradient');
+                
+                document.getElementById('bg-color-1').value = '#EA8D8D';
+                document.getElementById('bg-color-1-hex').value = '#EA8D8D';
+                document.getElementById('bg-color-2').value = '#A890FE';
+                document.getElementById('bg-color-2-hex').value = '#A890FE';
+                document.getElementById('text-color').value = '#FFFFFF';
+                document.getElementById('text-stroke-color').value = '#1E1E24';
+                showToast('🌊 부드러운 파스텔 크루즈 웨이브 완성! (텍스트 보존)', 'success');
+            }
+
+            updateEffects();
+            updateSourceData();
+        }
+
+        // 탭 제어 (행성이 탭이 완전히 제외된 3개 리스트 관리)
+        function switchTab(tabId) {
+            const tabs = ['text-tab', 'image-tab', 'video-tab'];
+            tabs.forEach(id => {
+                const btn = document.getElementById(`tab-btn-${id.split('-')[0]}`);
+                if (btn) btn.className = "flex-1 min-w-[120px] py-3 px-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-all text-slate-500 hover:text-slate-800 hover:bg-white/50";
+            });
+
+            const activeBtn = document.getElementById(`tab-btn-${tabId.split('-')[0]}`);
+            if (activeBtn) activeBtn.className = "flex-1 min-w-[120px] py-3 px-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all bg-white text-slack-purple shadow-sm border border-slate-200/50";
+
+            document.getElementById('panel-text')?.classList.add('hidden');
+            document.getElementById('panel-image')?.classList.add('hidden');
+            document.getElementById('panel-video')?.classList.add('hidden');
+
+            const sourceName = tabId.split('-')[0];
+            document.getElementById(`panel-${sourceName}`)?.classList.remove('hidden');
+            STATE.currentTab = sourceName;
+            
+            recalculateDuration();
+
+            showToast(`🚀 편집 포커스: ${sourceName === 'text' ? '텍스트 빌더' : sourceName === 'image' ? '이미지 업로더' : '동영상 무잔상 인코더'}`, 'info');
+            updateSourceData();
+        }
+
+        // 줌 배율 제어
+        function changeZoom(factor) {
+            STATE.zoom = factor;
+            ['1', '2', '4'].forEach(z => {
+                const btn = document.getElementById(`zoom-btn-${z}`);
+                if (btn) {
+                    btn.classList.remove('bg-slate-100', 'font-bold');
+                    btn.classList.add('font-semibold');
+                }
+            });
+            document.getElementById(`zoom-btn-${factor}`)?.classList.add('bg-slate-100', 'font-bold');
+            const wrapper = document.getElementById(`canvas-zoom-wrapper`);
+            if (wrapper) {
+                wrapper.style.width = `${64 * factor}px`;
+                wrapper.style.height = `${64 * factor}px`;
+            }
+        }
+
+        // 슬랙 테마 토글링
+        function toggleSlackMockTheme(theme) {
+            const area = document.getElementById('slack-mockup-area');
+            const user1 = document.getElementById('slack-text-user1');
+            const user2 = document.getElementById('slack-text-user2');
+            
+            if (theme === 'dark') {
+                if (area) area.className = "p-6 bg-slack-darkBg space-y-5 min-h-[190px] transition-all text-slate-300 overflow-y-auto";
+                if (user1) user1.className = "text-sm font-black text-white";
+                if (user2) user2.className = "text-sm font-black text-white";
+                const dBtn = document.getElementById('slack-theme-dark');
+                if (dBtn) dBtn.className = "p-1 px-3 text-[10px] font-bold rounded bg-slate-700 text-white shadow-xs";
+                const lBtn = document.getElementById('slack-theme-light');
+                if (lBtn) lBtn.className = "p-1 px-3 text-[10px] font-semibold rounded text-slate-400 hover:text-white";
+            } else {
+                if (area) area.className = "p-6 bg-white space-y-5 min-h-[190px] transition-all text-slate-700 overflow-y-auto";
+                if (user1) user1.className = "text-sm font-black text-slate-900";
+                if (user2) user2.className = "text-sm font-black text-slate-900";
+                const lBtn = document.getElementById('slack-theme-light');
+                if (lBtn) lBtn.className = "p-1 px-3 text-[10px] font-bold rounded bg-white text-slate-800 shadow-xs";
+                const dBtn = document.getElementById('slack-theme-dark');
+                if (dBtn) dBtn.className = "p-1 px-3 text-[10px] font-semibold rounded text-slate-500 hover:text-slate-800";
+            }
+        }
+
+        function syncColorInput(pickerId, hexValue) {
+            if (/^#[0-9A-F]{6}$/i.test(hexValue)) {
+                const picker = document.getElementById(pickerId);
+                if (picker) picker.value = hexValue;
+                updateSourceData();
+            }
+        }
+
+        function updateFontSize(val) {
+            const el = document.getElementById('font-size-val');
+            if (el) el.innerHTML = val;
+            STATE.fontSize = parseInt(val);
+            updateSourceData();
+        }
+
+        // 폰트 패밀리에 시스템 컬러 이모지 폰트들을 보조 지원군으로 강제 결합
+        function getComputedFontFamily(family) {
+            return `${family}, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif`;
+        }
+
+        function updateOptimizeToggle() {
+            const toggle = document.getElementById('auto-compress-toggle');
+            if (toggle) {
+                STATE.autoOptimize = toggle.checked;
+            }
+        }
+
+        function updateEffects() {
+            STATE.effects.wiggle = document.getElementById('effect-wiggle')?.checked || false;
+            STATE.effects.sparkle = document.getElementById('effect-sparkle')?.checked || false;
+            STATE.effects.glitch = document.getElementById('effect-glitch')?.checked || false;
+            STATE.effects.wave = document.getElementById('effect-wave')?.checked || false;
+            STATE.effects.party = document.getElementById('effect-party')?.checked || false;
+            STATE.effects.fire = document.getElementById('effect-fire')?.checked || false;
+        }
+
+        function updateSourceData() {
+            STATE.text = document.getElementById('text-input')?.value || '';
+            
+            STATE.textColor = document.getElementById('text-color')?.value || '#FFFFFF';
+            const textHex = document.getElementById('text-color-hex');
+            if (textHex) textHex.value = STATE.textColor;
+
+            STATE.textStrokeColor = document.getElementById('text-stroke-color')?.value || '#000000';
+            const strokeHex = document.getElementById('text-stroke-hex');
+            if (strokeHex) strokeHex.value = STATE.textStrokeColor;
+            STATE.strokeWidth = parseInt(document.getElementById('stroke-width')?.value || '5');
+
+            STATE.fontFamily = document.getElementById('font-family')?.value || 'Arial Black, Impact, sans-serif';
+            
+            STATE.bgColor1 = document.getElementById('bg-color-1')?.value || '#4A154B';
+            const bg1Hex = document.getElementById('bg-color-1-hex');
+            if (bg1Hex) bg1Hex.value = STATE.bgColor1;
+            STATE.bgColor2 = document.getElementById('bg-color-2')?.value || '#E01E5A';
+            const bg2Hex = document.getElementById('bg-color-2-hex');
+            if (bg2Hex) bg2Hex.value = STATE.bgColor2;
+
+            STATE.imageFit = document.getElementById('image-fit')?.value || 'contain';
+            STATE.imageRoundedMask = document.getElementById('image-rounded-mask')?.checked || false;
+            STATE.videoFit = document.getElementById('video-fit')?.value || 'contain';
+
+            recalculateDuration();
+        }
+
+        function changeBgType(type) {
+            STATE.bgType = type;
+            ['transparent', 'solid', 'gradient'].forEach(t => {
+                const btn = document.getElementById(`bg-btn-${t}`);
+                if (btn) btn.className = "px-4 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-1.5";
+            });
+
+            const activeBtn = document.getElementById(`bg-btn-${type}`);
+            if (activeBtn) activeBtn.className = "px-4 py-2 text-xs font-bold rounded-xl border border-slate-300 bg-slate-100 text-slate-800 transition-all flex items-center gap-1.5 shadow-sm";
+
+            const container = document.getElementById('bg-color-selectors');
+            const radial2 = document.getElementById('bg-color-2-container');
+            const label1 = document.getElementById('bg-color-1-label');
+
+            if (type === 'transparent') {
+                container?.classList.add('hidden');
+            } else if (type === 'solid') {
+                container?.classList.remove('hidden');
+                radial2?.classList.add('hidden');
+                if (label1) label1.innerHTML = '배경 단색 선택';
+            } else if (type === 'gradient') {
+                container?.classList.remove('hidden');
+                radial2?.classList.remove('hidden');
+                if (label1) label1.innerHTML = '시작 그라데이션 색상';
+            }
+        }
+
+        function updateFormatSelect(format) {
+            const badge = document.getElementById('format-badge');
+            if (badge) {
+                if (format === 'gif') {
+                    badge.innerHTML = "GIF 애니메이션";
+                    badge.className = "text-xs font-extrabold bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full border border-purple-200 shadow-sm";
+                } else {
+                    badge.innerHTML = "정적 PNG 고해상도";
+                    badge.className = "text-xs font-extrabold bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full border border-blue-200 shadow-sm";
+                }
+            }
+        }
+
+        function toggleDarkMode(isDark) {
+            STATE.darkMode = isDark;
+            const body = document.body;
+            const lBtn = document.getElementById('light-mode-btn');
+            const dBtn = document.getElementById('dark-mode-btn');
+
+            if (isDark) {
+                body.classList.add('dark', 'bg-slate-900', 'text-slate-100');
+                body.classList.remove('bg-slate-50', 'text-slate-800');
+                if (dBtn) dBtn.className = "px-3 py-1 text-xs font-bold rounded bg-slate-800 shadow-sm text-white flex items-center gap-1.5 transition-all";
+                if (lBtn) lBtn.className = "px-3 py-1 text-xs font-semibold rounded text-slate-400 hover:text-white flex items-center gap-1.5 transition-all";
+            } else {
+                body.classList.remove('dark', 'bg-slate-900', 'text-slate-100');
+                body.classList.add('bg-slate-50', 'text-slate-800');
+                if (lBtn) lBtn.className = "px-3 py-1 text-xs font-bold rounded bg-white shadow-sm text-slate-800 flex items-center gap-1.5 transition-all";
+                if (dBtn) dBtn.className = "px-3 py-1 text-xs font-semibold rounded text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition-all";
+            }
+        }
+
+        // 실시간 미리보기용 렌더링 루프
+        function startRenderLoop() {
+            const canvas = document.getElementById('emoji-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const mockCanvas = document.getElementById('slack-mock-emoji-canvas');
+            if (!mockCanvas) return;
+            const mockCtx = mockCanvas.getContext('2d');
+
+            const offscreenCanvas = document.createElement('canvas');
+            offscreenCanvas.width = 128;
+            offscreenCanvas.height = 128;
+            const oCtx = offscreenCanvas.getContext('2d');
+
+            let lastTime = performance.now();
+
+            function renderFrame(now) {
+                if (STATE.isCompiling) {
+                    requestAnimationFrame(renderFrame);
+                    return;
+                }
+
+                const delta = now - lastTime;
+                lastTime = now;
+
+                // 마스터 밀리초 타이머 누적
+                STATE.elapsedTimeSec += delta / 1000;
+                
+                STATE.time += (delta / 80) * (60 / 12.5);
+                
+                oCtx.clearRect(0, 0, 128, 128);
+                ctx.clearRect(0, 0, 128, 128);
+
+                drawBaseCanvas(oCtx, STATE.time);
+                applyEffectsChain(ctx, offscreenCanvas, oCtx, STATE.time);
+
+                mockCtx.clearRect(0, 0, 24, 24);
+                mockCtx.drawImage(canvas, 0, 0, 24, 24);
+
+                requestAnimationFrame(renderFrame);
+            }
+            requestAnimationFrame(renderFrame);
+        }
+
+        // 멀티라인 텍스트 드로잉 통합 헬퍼
+        function drawMultilineText(ctx, text, x, y, fontSize, fontFamily, strokeWidth, strokeColor, fillColor, lineGapRatio = 1.05) {
+            // 이모지 호환용 Fallback 폰트 패밀리 동적 매핑
+            const computedFont = getComputedFontFamily(fontFamily);
+            ctx.font = `900 ${fontSize}px ${computedFont}`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const lines = text.split('\n');
+            const lineHeight = fontSize * lineGapRatio;
+            const totalHeight = (lines.length - 1) * lineHeight;
+            
+            // 전체 텍스트 블록이 (x, y) 중심에 위치하도록 Y축 보정
+            let currentY = y - totalHeight / 2;
+
+            lines.forEach((line) => {
+                if (strokeWidth > 0) {
+                    ctx.strokeStyle = strokeColor;
+                    ctx.lineWidth = strokeWidth;
+                    ctx.lineJoin = 'round';
+                    ctx.strokeText(line, x, currentY);
+                }
+                ctx.fillStyle = fillColor;
+                ctx.fillText(line, x, currentY);
+                currentY += lineHeight;
+            });
+        }
+
+        function drawBaseCanvas(ctx, frameTime) {
+            const progress = (frameTime % STATE.loopDuration) / STATE.loopDuration;
+            const angle = progress * Math.PI * 2;
+
+            // 지옥불 효과 활성화 시 배경을 무조건 프리미엄 검은색으로 고정 강제
+            if (STATE.effects.fire) {
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(0, 0, 128, 128);
+            } else {
+                // 일반 배경 모드 렌더링
+                if (STATE.bgType === 'solid') {
+                    ctx.fillStyle = STATE.bgColor1;
+                    ctx.fillRect(0, 0, 128, 128);
+                } else if (STATE.bgType === 'gradient') {
+                    const grad = ctx.createLinearGradient(0, 0, 128, 128);
+                    grad.addColorStop(0, STATE.bgColor1);
+                    grad.addColorStop(1, STATE.bgColor2);
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, 128, 128);
+                }
+            }
+
+            if (STATE.effects.party) {
+                ctx.save();
+                const hue = Math.floor((progress * 2) * 360) % 360;
+                ctx.fillStyle = `hsla(${hue}, 80%, 50%, 0.25)`;
+                ctx.fillRect(0, 0, 128, 128);
+                ctx.restore();
+            }
+
+            // 지옥불 효과가 활성화되어 있을 때 솟구치는 불꽃을 텍스트/이미지 뒤에 가산 렌더링
+            if (STATE.effects.fire) {
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter'; // 더욱 활활 타오르는 가산 합성 효과 적용
+                
+                // 1층: 가장 넓고 어두운 빨강 화염
+                ctx.fillStyle = 'rgba(235, 30, 20, 0.85)';
+                ctx.beginPath();
+                ctx.moveTo(0, 128);
+                for (let x = 0; x <= 128; x += 8) {
+                    const waveHeight = 44 + Math.sin(angle * 2.5 + x * 0.08) * 14 + Math.cos(angle * 1.5 - x * 0.04) * 7;
+                    ctx.lineTo(x, 128 - waveHeight);
+                }
+                ctx.lineTo(128, 128);
+                ctx.closePath();
+                ctx.fill();
+
+                // 2층: 중간 범위의 주황 화염
+                ctx.fillStyle = 'rgba(255, 120, 10, 0.9)';
+                ctx.beginPath();
+                ctx.moveTo(0, 128);
+                for (let x = 0; x <= 128; x += 8) {
+                    const waveHeight = 28 + Math.sin(angle * 3.5 + x * 0.12) * 9 + Math.cos(angle * 2.0 - x * 0.06) * 5;
+                    ctx.lineTo(x, 128 - waveHeight);
+                }
+                ctx.lineTo(128, 128);
+                ctx.closePath();
+                ctx.fill();
+
+                // 3층: 중심부의 가장 밝고 뜨거운 노랑 화염
+                ctx.fillStyle = 'rgba(255, 230, 20, 0.95)';
+                ctx.beginPath();
+                ctx.moveTo(0, 128);
+                for (let x = 0; x <= 128; x += 8) {
+                    const waveHeight = 15 + Math.sin(angle * 4.5 + x * 0.18) * 6 + Math.cos(angle * 3.0 - x * 0.09) * 4;
+                    ctx.lineTo(x, 128 - waveHeight);
+                }
+                ctx.lineTo(128, 128);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            ctx.save();
+            let xOffset = 64;
+            let yOffset = 64;
+            let scale = 1.0;
+            let rotate = 0.0;
+
+            if (STATE.effects.wiggle) {
+                xOffset += Math.sin(angle * 2) * 8;
+                yOffset += Math.abs(Math.sin(angle * 3)) * -6 + 3;
+                rotate = Math.sin(angle * 2) * 0.12;
+            }
+
+            if (STATE.effects.party) {
+                scale *= 1.0 + Math.sin(angle * 2) * 0.15;
+                rotate += angle;
+            }
+
+            ctx.translate(xOffset, yOffset);
+            ctx.rotate(rotate);
+            ctx.scale(scale, scale);
+
+            // 타입별 이모지 캔버스 드로잉 (깔끔하게 3가지 분기)
+            if (STATE.currentTab === 'text') {
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+
+                // 한 글자씩 순차 노출 렌더링 및 이모지 대응 패치
+                let activeStr = STATE.text;
+                if (STATE.seqTextEnabled && activeStr.length > 0) {
+                    const cleanStr = activeStr.replace(/\n/g, '');
+                    // Array.from()을 사용하여 유니코드 다중 바이트 문자(이모지 등)를 한 장씩 정밀 파악
+                    const unicodeCharList = Array.from(cleanStr);
+                    if (unicodeCharList.length > 0) {
+                        const currentSec = STATE.elapsedTimeSec % STATE.captureDuration;
+                        const charIdx = Math.floor(currentSec / STATE.seqDelaySec) % unicodeCharList.length;
+                        activeStr = unicodeCharList[charIdx] || '';
+                    }
+                }
+
+                // 멀티라인 렌더링 도입
+                drawMultilineText(ctx, activeStr, 0, 0, STATE.fontSize, STATE.fontFamily, STATE.strokeWidth, STATE.textStrokeColor, STATE.textColor);
+
+            } else if (STATE.currentTab === 'image' && STATE.imageElement) {
+                drawFitSource(ctx, STATE.imageElement, STATE.imageFit, STATE.imageRoundedMask);
+
+            } else if (STATE.currentTab === 'video' && STATE.videoElement) {
+                drawFitSource(ctx, STATE.videoElement, STATE.videoFit, false);
+            }
+
+            ctx.restore();
+
+            if (STATE.effects.sparkle) {
+                drawSparklesOverlay(ctx, progress, angle);
+            }
+        }
+
+        function applyEffectsChain(mainCtx, offscreen, oCtx, frameTime) {
+            const progress = (frameTime % STATE.loopDuration) / STATE.loopDuration;
+            const angle = progress * Math.PI * 2;
+
+            if (!STATE.effects.glitch && !STATE.effects.wave) {
+                mainCtx.drawImage(offscreen, 0, 0);
+                return;
+            }
+
+            const waveAmplitude = 4;
+            const waveFrequency = 14;
+
+            if (STATE.effects.wave) {
+                for (let y = 0; y < 128; y++) {
+                    const xOffset = Math.sin((y / waveFrequency) + angle) * waveAmplitude;
+                    mainCtx.drawImage(offscreen, 0, y, 128, 1, xOffset, y, 128, 1);
+                }
+            } else {
+                mainCtx.drawImage(offscreen, 0, 0);
+            }
+
+            if (STATE.effects.glitch && Math.random() < 0.22) {
+                const sliceCount = Math.floor(Math.random() * 4) + 2;
+                for (let i = 0; i < sliceCount; i++) {
+                    const sliceY = Math.random() * 110;
+                    const sliceHeight = Math.random() * 15 + 4;
+                    const shiftX = (Math.random() - 0.5) * 16;
+                    
+                    mainCtx.save();
+                    mainCtx.fillStyle = 'rgba(255, 0, 100, 0.25)';
+                    mainCtx.fillRect(0, sliceY, 128, sliceHeight);
+                    mainCtx.drawImage(offscreen, 0, sliceY, 128, sliceHeight, shiftX, sliceY, 128, sliceHeight);
+                    mainCtx.restore();
+                }
+            }
+        }
+
+        function drawFitSource(ctx, element, fitType, hasRoundMask) {
+            let srcW = element.videoWidth || element.width || 128;
+            let srcH = element.videoHeight || element.height || 128;
+            
+            let drawW = 128;
+            let drawH = 128;
+            let drawX = -64;
+            let drawY = -64;
+
+            if (fitType === 'contain') {
+                const ratio = Math.min(128 / srcW, 128 / srcH);
+                drawW = srcW * ratio;
+                drawH = srcH * ratio;
+                drawX = -drawW / 2;
+                drawY = -drawH / 2;
+            } else if (fitType === 'cover') {
+                const ratio = Math.max(128 / srcW, 128 / srcH);
+                drawW = srcW * ratio;
+                drawH = srcH * ratio;
+                drawX = -drawW / 2;
+                drawY = -drawH / 2;
+            }
+
+            if (hasRoundMask) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(0, 0, 56, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.drawImage(element, drawX, drawY, drawW, drawH);
+                ctx.restore();
+            } else {
+                ctx.drawImage(element, drawX, drawY, drawW, drawH);
+            }
+        }
+
+        function drawSparklesOverlay(ctx, progress, angle) {
+            ctx.save();
+            STATE.sparkles.forEach((s) => {
+                const currentY = (s.initialY - progress * 128 + 128) % 128;
+                const currentPhase = s.phase + angle;
+                const dynamicSize = s.size * (0.4 + Math.abs(Math.sin(currentPhase)) * 0.6);
+                
+                ctx.save();
+                ctx.translate(s.x, currentY);
+                ctx.rotate(currentPhase * 0.2);
+                
+                ctx.fillStyle = `hsla(${(progress * 360 + s.x) % 360}, 100%, 75%, 0.9)`;
+                
+                ctx.beginPath();
+                for (let i = 0; i < 4; i++) {
+                    ctx.lineTo(0, -dynamicSize);
+                    ctx.quadraticCurveTo(0, 0, dynamicSize, 0);
+                    ctx.quadraticCurveTo(0, 0, 0, dynamicSize);
+                    ctx.quadraticCurveTo(0, 0, -dynamicSize, 0);
+                    ctx.quadraticCurveTo(0, 0, 0, -dynamicSize);
+                }
+                ctx.fill();
+                ctx.restore();
+            });
+            ctx.restore();
+        }
+
+        /**
+         * HTML5 Video seek를 순차적으로 확실히 기다린 후 프레임을 획득하는 비동기 프레임 동기화 헬퍼
+         */
+        function seekVideoToTime(video, targetTime) {
+            return new Promise((resolve) => {
+                const onSeeked = () => {
+                    video.removeEventListener('seeked', onSeeked);
+                    resolve();
+                };
+                video.addEventListener('seeked', onSeeked);
+                video.currentTime = targetTime;
+            });
+        }
+
+        /**
+         * 0초부터 완전 재생 타임라인까지 12.5 FPS로 엄밀하게 캡처하는 다단계 동기 컴파일 함수
+         */
+        async function runSinglePassEncoder(width, height, scale, colorsCount, progressCallback) {
+            const framesCount = Math.round(STATE.captureDuration * 12.5); // 12.5 FPS 타겟
+            const frameDelay = 80; // 80ms 딜레이 고정
+
+            const renderWidth = Math.round(width * scale);
+            const renderHeight = Math.round(height * scale);
+
+            const compileCanvas = document.createElement('canvas');
+            compileCanvas.width = renderWidth;
+            compileCanvas.height = renderHeight;
+            const cCtx = compileCanvas.getContext('2d');
+
+            const compileOffscreen = document.createElement('canvas');
+            compileOffscreen.width = renderWidth;
+            compileOffscreen.height = renderHeight;
+            const coCtx = compileOffscreen.getContext('2d');
+
+            const gifEncoder = GIFEncoder();
+            const formatMode = 'rgba4444';
+
+            // 비디오 캡처 모드일 경우 재생 일시중지
+            if (STATE.currentTab === 'video' && STATE.videoElement) {
+                STATE.videoElement.pause();
+            }
+
+            for (let i = 0; i < framesCount; i++) {
+                coCtx.clearRect(0, 0, renderWidth, renderHeight);
+                cCtx.clearRect(0, 0, renderWidth, renderHeight);
+
+                // 현재 시점의 프레임 시간 계산
+                const progress = i / framesCount;
+                const currentSec = progress * STATE.captureDuration;
+
+                // 비디오 모드인 경우 원본 비디오를 정확히 해당 초로 이동(seek)시킵니다.
+                if (STATE.currentTab === 'video' && STATE.videoElement) {
+                    await seekVideoToTime(STATE.videoElement, currentSec);
+                }
+
+                const simulatedTime = progress * STATE.loopDuration;
+
+                // 컴파일러 전용 타임라인 동기화 백업 클럭 세팅
+                const savedElapsedSec = STATE.elapsedTimeSec;
+                STATE.elapsedTimeSec = currentSec;
+
+                coCtx.save();
+                coCtx.scale(scale, scale);
+                drawBaseCanvas(coCtx, simulatedTime);
+                coCtx.restore();
+
+                cCtx.save();
+                cCtx.scale(scale, scale);
+                applyEffectsChain(cCtx, compileOffscreen, coCtx, simulatedTime);
+                cCtx.restore();
+
+                // 클럭 원상복귀
+                STATE.elapsedTimeSec = savedElapsedSec;
+
+                const imgData = cCtx.getImageData(0, 0, renderWidth, renderHeight);
+                const pix = imgData.data;
+
+                const palette = quantize(pix, colorsCount, { format: formatMode });
+                const index = applyPalette(pix, palette, formatMode);
+
+                let transparentIndex = palette.findIndex(c => c[3] === 0);
+                if (transparentIndex === -1) {
+                    transparentIndex = 0;
+                    palette[0] = [0, 0, 0, 0];
+                }
+
+                // dispose: 2를 설정하여 투명 오버랩 잔상을 말끔하게 방지
+                gifEncoder.writeFrame(index, renderWidth, renderHeight, {
+                    palette,
+                    delay: frameDelay,
+                    transparent: STATE.bgType === 'transparent',
+                    transparentIndex: transparentIndex,
+                    dispose: 2
+                });
+
+                if (progressCallback) {
+                    progressCallback(Math.floor(((i + 1) / framesCount) * 100));
+                }
+            }
+
+            gifEncoder.finish();
+
+            // 작업 종료 후 비디오 재생 상태 복원
+            if (STATE.currentTab === 'video' && STATE.videoElement) {
+                STATE.videoElement.play().catch(() => {});
+            }
+
+            return gifEncoder.bytes();
+        }
+
+        async function compileAndDownload() {
+            if (STATE.isCompiling) return;
+            
+            const format = document.getElementById('export-format').value;
+            const filename = document.getElementById('emoji-alias').value || 'custom_emoji';
+            
+            if (format === 'png') {
+                const canvas = document.getElementById('emoji-canvas');
+                if (canvas) {
+                    const link = document.createElement('a');
+                    link.download = `${filename}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    showToast('💾 고화질 정적 PNG 다운로드 완료!', 'success');
+                }
+                return;
+            }
+
+            // GIF 인코딩 개시
+            STATE.isCompiling = true;
+            const progressContainer = document.getElementById('compiling-progress-bar');
+            const progressIndicator = document.getElementById('progress-indicator');
+            const progressPercent = document.getElementById('progress-percent');
+            const statusLabel = document.getElementById('progress-status-label');
+            const downloadBtn = document.getElementById('download-btn');
+
+            if (progressContainer) progressContainer.classList.remove('hidden');
+            if (downloadBtn) {
+                downloadBtn.disabled = true;
+                downloadBtn.innerHTML = `<i class="fa-solid fa-gear animate-spin"></i> 프레임 순차 분석 중...`;
+            }
+
+            let colors = 256;
+            let scale = 1.0;
+            const baseWidth = 128;
+            const baseHeight = 128;
+            const sizeLimitBytes = 128 * 1024; // 128 KB
+
+            // 비동기 렌더링을 순차적으로 수행하기 위해 비동기 처리
+            setTimeout(async () => {
+                try {
+                    if (statusLabel) statusLabel.innerHTML = "글자 순차 분석 동기 렌더링 중...";
+                    
+                    // 1단계 풀 퀄리티 렌더링
+                    let compiledBytes = await runSinglePassEncoder(baseWidth, baseHeight, scale, colors, (percent) => {
+                        if (progressIndicator) progressIndicator.style.width = `${percent}%`;
+                        if (progressPercent) progressPercent.innerHTML = `${percent}%`;
+                    });
+
+                    let finalSizeBytes = compiledBytes.length;
+                    const initialSizeKB = (finalSizeBytes / 1024).toFixed(1);
+
+                    // 용량 초과 시 자동 다단계 압축
+                    if (finalSizeBytes > sizeLimitBytes && STATE.autoOptimize) {
+                        showToast(`⚠️ 용량 초과 (${initialSizeKB}KB). 무손실 컬러 압축 최적화 돌입!`, 'warning');
+                        if (statusLabel) statusLabel.innerHTML = "2단계 압축 처리 중 (128색)...";
+                        
+                        colors = 128;
+                        compiledBytes = await runSinglePassEncoder(baseWidth, baseHeight, scale, colors, null);
+                        finalSizeBytes = compiledBytes.length;
+                    }
+
+                    if (finalSizeBytes > sizeLimitBytes && STATE.autoOptimize) {
+                        showToast(`⚠️ 용량이 여전히 ${ (finalSizeBytes/1024).toFixed(1) }KB입니다. 3단계 초압축 진행!`, 'warning');
+                        if (statusLabel) statusLabel.innerHTML = "3단계 강력 최적화 중 (64색)...";
+                        
+                        colors = 64;
+                        compiledBytes = await runSinglePassEncoder(baseWidth, baseHeight, scale, colors, null);
+                        finalSizeBytes = compiledBytes.length;
+                    }
+
+                    if (finalSizeBytes > sizeLimitBytes && STATE.autoOptimize) {
+                        showToast('🚨 최후의 수단: 픽셀 스케일 정밀 다운사이징을 적용합니다.', 'warning');
+                        if (statusLabel) statusLabel.innerHTML = "4단계 정밀 해상도 보정 최적화 중...";
+                        
+                        scale = 0.8;
+                        compiledBytes = await runSinglePassEncoder(baseWidth, baseHeight, scale, colors, null);
+                        finalSizeBytes = compiledBytes.length;
+                    }
+
+                    const finalSizeKB = (finalSizeBytes / 1024).toFixed(1);
+                    const isWithinLimit = finalSizeBytes <= sizeLimitBytes;
+
+                    const blob = new Blob([compiledBytes], { type: 'image/gif' });
+                    const link = document.createElement('a');
+                    link.download = `${filename}.gif`;
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+
+                    if (isWithinLimit) {
+                        showToast(`🎉 완벽한 싱크 완료! 최종 용량: ${finalSizeKB} KB (슬랙 등록 가능 보장)`, 'success');
+                    } else {
+                        showToast(`💾 다운로드 완료! 용량: ${finalSizeKB} KB`, 'info');
+                    }
+
+                } catch (err) {
+                    console.error(err);
+                    showToast('❌ 원본 디코딩 중 에러가 발생했습니다. 브라우저 지원 형식을 확인해 주세요.', 'error');
+                } finally {
+                    STATE.isCompiling = false;
+                    if (progressContainer) progressContainer.classList.add('hidden');
+                    if (downloadBtn) {
+                        downloadBtn.disabled = false;
+                        downloadBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-down text-base"></i> <span>슬랙 최적화 이모지 다운로드</span>`;
+                    }
+                }
+            }, 60);
+        }
+
+        // 전역 함수 등록
+        window.compileAndDownload = compileAndDownload;
+        window.applyPreset = applyPreset;
+        window.switchTab = switchTab;
+        window.changeZoom = changeZoom;
+        window.toggleSlackMockTheme = toggleSlackMockTheme;
+        window.syncColorInput = syncColorInput;
+        window.updateFontSize = updateFontSize;
+        window.updateOptimizeToggle = updateOptimizeToggle;
+        window.updateEffects = updateEffects;
+        window.updateSourceData = updateSourceData;
+        window.changeBgType = changeBgType;
+        window.updateFormatSelect = updateFormatSelect;
+        window.toggleDarkMode = toggleDarkMode;
+        window.toggleSeqText = toggleSeqText;
+        
+        // 이모지 추가 연동 바인딩
+        window.insertEmojiAtCursor = insertEmojiAtCursor;
+        window.toggleEmojiPalette = toggleEmojiPalette;
+        
+        // 지옥불 바인딩 등록
+        window.handleFireEffectToggle = handleFireEffectToggle;
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-slate-800 text-white';
+            if (type === 'success') bgClass = 'bg-emerald-600 text-white';
+            if (type === 'warning') bgClass = 'bg-amber-500 text-slate-900';
+            if (type === 'error') bgClass = 'bg-rose-600 text-white';
+
+            toast.className = `${bgClass} flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border border-white/10 text-xs font-bold transition-all duration-300 transform translate-x-12 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()" class="hover:opacity-75"><i class="fa-solid fa-xmark"></i></button>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-x-12', 'opacity-0');
+            }, 50);
+
+            setTimeout(() => {
+                toast.classList.add('translate-x-12', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4500);
+        }
+    </script>
+</body>
+</html>
