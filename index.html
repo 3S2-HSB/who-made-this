@@ -709,12 +709,32 @@
         </main>
 
         <!-- 푸터 -->
-        <footer>
-  <a href="https://hits.sh/3s2-hsb.github.io/who-made-this/">
-    <img src="https://hits.sh/3s2-hsb.github.io/who-made-this.svg?style=flat-square&label=hits&color=dd397b&labelColor=2d2d3a" alt="Hits">
-  </a>
-  <p>© 2026 세 개의 심장 — 허닛브레드 샘이 솟아 리오레이별터. All rights reserved.</p>
-  <p>Who Made This — All assets render locally in high-performance Web Canvas. Slack is a trademark of Salesforce, Inc.</p>
+        <footer class="mt-6 px-6 py-5 border-t border-slate-200 bg-white">
+    <div class="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        
+        <!-- 좌측: 미니 브랜드 + 카피라이트 -->
+        <div class="flex items-center gap-2.5">
+            <div class="w-6 h-6 bg-gradient-to-tr from-slack-purple via-slack-pink to-slack-yellow rounded-md flex items-center justify-center text-white shadow-sm">
+                <i class="fa-solid fa-face-laugh-squint text-[10px]"></i>
+            </div>
+            <p class="text-[11px] text-slate-500 font-medium">
+                © 2026 <span class="font-bold text-slate-700">세 개의 심장</span>
+                <span class="mx-1.5 text-slate-300">·</span>
+                <span class="text-slate-400">허닛브레드 샘이 솟아 리오레이별터</span>
+            </p>
+        </div>
+
+        <!-- 우측: Hits 배지 + 안내문 -->
+        <div class="flex items-center gap-3">
+            <p class="text-[10px] text-slate-400 hidden md:block">
+                Renders locally · Slack™ Salesforce, Inc.
+            </p>
+            <a href="https://hits.sh/3s2-hsb.github.io/who-made-this/" target="_blank" rel="noopener" class="hover:opacity-80 transition-opacity">
+                <img src="https://hits.sh/3s2-hsb.github.io/who-made-this.svg?style=flat-square&label=hits&color=E01E5A&labelColor=4A154B" alt="Hits">
+            </a>
+        </div>
+
+    </div>
 </footer>
     </div>
 
